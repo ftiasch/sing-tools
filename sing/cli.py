@@ -7,9 +7,6 @@ import requests
 import argcomplete
 import json
 
-from plumbum import local
-from plumbum.cmd import sudo, systemctl
-
 from lib import Parser
 
 

@@ -1,6 +1,6 @@
 {
   "log": {
-    "level": "error",
+    "level": "info",
     "timestamp": true
   },
   "dns": {
@@ -65,6 +65,12 @@
       "auto_route": true,
       "stack": "system",
       "sniff": true
+    },
+    {
+      "type": "http",
+      "tag": "http-in",
+      "listen": "::",
+      "listen_port": 8001
     }
   ],
   "route": {
@@ -153,7 +159,8 @@
       "path": "cache.db"
     },
     "clash_api": {
-      "external_controller": "127.0.0.1:9090"
+      "external_ui": "/usr/share/yacd",
+      "external_controller": "0.0.0.0:9090"
     }
   }
 }
