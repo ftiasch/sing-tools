@@ -41,12 +41,14 @@ def select(nameserver: Optional[str] = None) -> Parser:
 def gen():
     parser = select("223.5.5.5")
     with open("run/config.json", "w") as f:
-        json.dump(parser.assemble(), f, indent=2)
+        json.dump(parser.assemble(), f, ensure_ascii=False, indent=2)
 
 
 def test():
     parser = select()
-    print(json.dumps([o["tag"] for o in parser.outbounds], indent=2))
+    print(
+        json.dumps([o["tag"] for o in parser.outbounds], ensure_ascii=False, indent=2)
+    )
 
 
 def main():

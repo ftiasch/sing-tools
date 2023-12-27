@@ -1,8 +1,8 @@
-import logging
-from base64 import b64decode
-from typing import Optional, Callable
-from urllib.parse import urlparse, parse_qs, unquote
+import base64
 import json
+import logging
+from typing import Callable, Optional
+from urllib.parse import parse_qs, unquote, urlparse
 
 import dns.exception
 import dns.rdatatype
@@ -56,7 +56,9 @@ class Parser:
                 logging.warning("filtered|%s" % (fragment))
 
         with open(f"run/{group_name}.txt") as f:
-            share_links = b64decode(f.read()).decode("utf-8").splitlines()
+            share_links = (
+                base64.urlsafe_b64decode(f.read()).decode("utf-8").splitlines()
+            )
         for share_link in share_links:
             parsed_url = urlparse(share_link)
             fragment = unquote(parsed_url.fragment, encoding="utf-8")
