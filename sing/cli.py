@@ -23,7 +23,7 @@ def down():
             f.write(requests.get(src).text)
 
     fetch("okgg", "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2")
-    # fetch("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
+    fetch("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
 
 def okgg_filter(name: str, _: dict) -> bool:
@@ -32,9 +32,16 @@ def okgg_filter(name: str, _: dict) -> bool:
     return False
 
 
+def ww_filter(name: str, __: dict) -> bool:
+    if "JP" in name:
+        return True
+    return False
+
+
 def select(nameserver: Optional[str] = None) -> Parser:
     parser = Parser(nameserver)
     parser.parse("okgg", okgg_filter)
+    # parser.parse("ww", ww_filter)
     return parser
 
 

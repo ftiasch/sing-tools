@@ -9,6 +9,12 @@ import dns.rdatatype
 import dns.resolver
 
 
+def b64decode(b: str) -> bytes:
+    while len(b) % 4 != 0:
+        b += "="
+    return base64.urlsafe_b64decode(b)
+
+
 class Parser:
     nameserver: Optional[str]
     resolver: dns.resolver.Resolver
@@ -56,9 +62,7 @@ class Parser:
                 logging.warning("filtered|%s" % (fragment))
 
         with open(f"run/{group_name}.txt") as f:
-            share_links = (
-                base64.urlsafe_b64decode(f.read()).decode("utf-8").splitlines()
-            )
+            share_links = b64decode(f.read()).decode("utf-8").splitlines()
         for share_link in share_links:
             parsed_url = urlparse(share_link)
             fragment = unquote(parsed_url.fragment, encoding="utf-8")
@@ -95,14 +99,40 @@ class Parser:
                         logging.warning(
                             "unknown vless|%s|%s" % (query_params, fragment)
                         )
+                case "trojan":
+                    uuid, hostname_part = parsed_url.netloc.split("@", 1)
+                    server, server_port = hostname_part.split(":", 1)
+                    try_add(
+                        fragment,
+                        {
+                            "type": "trojan",
+                            "server": server,
+                            "server_port": int(server_port),
+                            "password": uuid,
+                            "tls": {
+                                "enabled": True,
+                                "insecure": query_params.get("allowInsecure", "0")
+                                == "1",
+                                "server_name": query_params["peer"][0],
+                            },
+                        },
+                    )
                 case _:
                     logging.warning(
                         "unknown proto|scheme=%s|%s" % (parsed_url.scheme, fragment)
                     )
 
     def assemble(self) -> dict:
-        proxy_tags = [o["tag"] for o in self.outbounds]
         outbounds = self.outbounds.copy()
+        proxy_tags = []
+        for o in outbounds:
+            tag = o["tag"]
+            count = 0
+            while tag in proxy_tags:
+                count += 1
+                tag = o["tag"] + f" #{count}"
+            o["tag"] = tag
+            proxy_tags.append(tag)
         outbounds.extend(
             [
                 {
