@@ -27,7 +27,7 @@ def down():
 
 
 def okgg_filter(name: str, _: dict) -> bool:
-    if "HongKong" in name:
+    if "AI" in name or "ChatGPT" in name:
         return True
     return False
 
