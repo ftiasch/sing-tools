@@ -7,7 +7,7 @@ import requests
 import argcomplete
 import json
 
-from lib import Parser
+from lib import Parser, gen_rules
 
 
 logging.basicConfig(
@@ -24,6 +24,10 @@ def down():
 
     fetch("okgg", "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2")
     fetch("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
+    fetch(
+        "anti-ad",
+        "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/adblock-for-dnsmasq.conf",
+    )
 
 
 def okgg_filter(name: str, _: dict) -> bool:
@@ -46,6 +50,8 @@ def select(nameserver: Optional[str] = None) -> Parser:
 
 
 def gen():
+    with open("run/ad-block.json", "w") as f:
+        json.dump({"version": 1, "rules": gen_rules()}, f, ensure_ascii=False, indent=2)
     parser = select("223.5.5.5")
     with open("run/config.json", "w") as f:
         json.dump(parser.assemble(), f, ensure_ascii=False, indent=2)

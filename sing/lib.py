@@ -1,6 +1,6 @@
 import base64
-import json
 import logging
+import re
 from typing import Callable, Optional
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -147,3 +147,18 @@ class Parser:
             ]
         )
         return {"outbounds": outbounds}
+
+
+def gen_rules():
+    pattern = r"address=/([^/]+)/"
+    rules = [{"domain_suffix": []}]
+    with open("run/anti-ad.txt") as f:
+        for line in f.readlines():
+            match = re.search(pattern, line)
+            if match:
+                # Extract the domain from the matched group
+                domain = match.group(1)
+                rules[0]["domain_suffix"].append(domain)
+            else:
+                pass
+    return rules

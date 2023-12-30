@@ -74,6 +74,10 @@
   "route": {
     "rules": [
       {
+        "rule_set": "ad-block",
+        "outbound": "block"
+      },
+      {
         "inbound": "dns-in",
         "outbound": "dns-out"
       },
@@ -142,6 +146,12 @@
         "tag": "geosite-category-companies@cn",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-companies@cn.srs"
+      },
+      {
+        "type": "local",
+        "tag": "ad-block",
+        "format": "binary",
+        "path": "/etc/sing-box/ad-block.srs"
       }
     ],
     "final": "proxy",
