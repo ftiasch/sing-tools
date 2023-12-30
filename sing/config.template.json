@@ -1,6 +1,6 @@
 {
   "log": {
-    "level": "info",
+    "level": "error",
     "timestamp": true
   },
   "dns": {
@@ -79,10 +79,6 @@
     "rules": [
       {
         "inbound": "dns-in",
-        "outbound": "dns-out"
-      },
-      {
-        "protocol": "dns",
         "outbound": "dns-out"
       },
       {
