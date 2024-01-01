@@ -18,7 +18,15 @@
         "detour": "direct"
       },
       {
-        "tag": "remote",
+        "tag": "dns_success",
+        "address": "rcode://success"
+      },
+      {
+        "tag": "dns_refused",
+        "address": "rcode://refused"
+      },
+      {
+        "tag": "dns_fakeip",
         "address": "fakeip"
       }
     ],
@@ -36,11 +44,34 @@
         "server": "dns_direct"
       },
       {
+        "rule_set": "ad-block",
+        "server": "dns_success",
+        "disable_cache": true
+      },
+      {
+        "rule_set": "geosite-geolocation-!cn",
         "query_type": [
           "A",
           "AAAA"
         ],
-        "server": "remote"
+        "server": "dns_fakeip"
+      },
+      {
+        "rule_set": "geosite-geolocation-!cn",
+        "query_type": [
+          "CNAME"
+        ],
+        "server": "dns_proxy"
+      },
+      {
+        "query_type": [
+          "A",
+          "AAAA",
+          "CNAME"
+        ],
+        "invert": true,
+        "server": "dns_refused",
+        "disable_cache": true
       }
     ],
     "fakeip": {
