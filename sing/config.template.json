@@ -45,11 +45,10 @@
       },
       {
         "rule_set": "ad-block",
-        "server": "dns_success",
+        "server": "dns_refused",
         "disable_cache": true
       },
       {
-        "rule_set": "geosite-geolocation-!cn",
         "query_type": [
           "A",
           "AAAA"
