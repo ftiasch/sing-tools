@@ -6,8 +6,15 @@
   "dns": {
     "servers": [
       {
-        "tag": "local",
+        "tag": "dns_proxy",
+        "address": "tls://8.8.8.8",
+        "strategy": "ipv4_only",
+        "detour": "proxy"
+      },
+      {
+        "tag": "dns_direct",
         "address": "223.5.5.5",
+        "strategy": "ipv4_only",
         "detour": "direct"
       },
       {
@@ -22,11 +29,11 @@
           ".ftiasch.xyz",
           ".limao.tech"
         ],
-        "server": "local"
+        "server": "dns_direct"
       },
       {
         "outbound": "any",
-        "server": "local"
+        "server": "dns_direct"
       },
       {
         "query_type": [
