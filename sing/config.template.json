@@ -160,7 +160,8 @@
   "experimental": {
     "cache_file": {
       "enabled": true,
-      "path": "cache.db"
+      "path": "cache.db",
+      "store_fakeip": true
     },
     "clash_api": {
       "external_ui": "/usr/share/yacd",
