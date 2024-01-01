@@ -151,14 +151,14 @@ class Parser:
 
 def gen_rules():
     pattern = r"address=/([^/]+)/"
-    rules = [{"domain_suffix": []}]
+    rules = [{"domain": []}]
     with open("run/anti-ad.txt") as f:
         for line in f.readlines():
             match = re.search(pattern, line)
             if match:
                 # Extract the domain from the matched group
                 domain = match.group(1)
-                rules[0]["domain_suffix"].append(domain)
+                rules[0]["domain"].append(domain)
             else:
                 pass
     return rules
