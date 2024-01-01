@@ -64,6 +64,12 @@
       },
       {
         "query_type": [
+          "CNAME"
+        ],
+        "server": "dns_direct"
+      },
+      {
+        "query_type": [
           "A",
           "AAAA",
           "CNAME"
