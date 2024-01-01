@@ -81,12 +81,30 @@
   "route": {
     "rules": [
       {
+        "inbound": "dns-in",
+        "outbound": "dns-out"
+      },
+      {
         "rule_set": "ad-block",
         "outbound": "block"
       },
       {
-        "inbound": "dns-in",
-        "outbound": "dns-out"
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "network": "tcp",
+            "port": 853
+          },
+          {
+            "network": "udp",
+            "port": 443
+          },
+          {
+            "protocol": "stun"
+          }
+        ],
+        "outbound": "block"
       },
       {
         "source_ip_cidr": "172.18.0.10",
