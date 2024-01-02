@@ -56,16 +56,12 @@
         "server": "dns_fakeip"
       },
       {
+        "query_type": "CNAME",
         "rule_set": "geosite-geolocation-!cn",
-        "query_type": [
-          "CNAME"
-        ],
         "server": "dns_proxy"
       },
       {
-        "query_type": [
-          "CNAME"
-        ],
+        "query_type": "CNAME",
         "server": "dns_direct"
       },
       {
@@ -226,8 +222,8 @@
       "store_fakeip": true
     },
     "clash_api": {
-      "external_ui": "/usr/share/yacd",
-      "external_controller": "0.0.0.0:9090"
+      "external_controller": "0.0.0.0:9090",
+      "external_ui": "/usr/share/yacd"
     }
   }
 }
