@@ -139,7 +139,7 @@ class Parser:
                     "type": "urltest",
                     "tag": "proxy",
                     "outbounds": proxy_tags,
-                    "tolerance": 300,
+                    "tolerance": 30,
                 },
                 {"type": "direct", "tag": "direct"},
                 {"type": "block", "tag": "block"},
