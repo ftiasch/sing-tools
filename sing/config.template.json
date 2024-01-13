@@ -168,8 +168,7 @@
           {
             "rule_set": [
               "geoip-cn",
-              "geosite-cn",
-              "geosite-category-companies@cn"
+              "geosite-cn"
             ]
           }
         ],
@@ -198,12 +197,6 @@
         "tag": "geosite-geolocation-!cn",
         "format": "binary",
         "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs"
-      },
-      {
-        "type": "remote",
-        "tag": "geosite-category-companies@cn",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-companies@cn.srs"
       },
       {
         "type": "local",
