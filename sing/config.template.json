@@ -144,11 +144,26 @@
         "outbound": "direct"
       },
       {
-        "rule_set": "cn",
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "rule_set": "geoip-cn"
+          },
+          {
+            "rule_set": "cn"
+          }
+        ],
         "outbound": "direct"
       }
     ],
     "rule_set": [
+      {
+        "type": "remote",
+        "tag": "geoip-cn",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs"
+      },
       {
         "type": "local",
         "tag": "ad-block",
