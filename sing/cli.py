@@ -66,7 +66,7 @@ def gen():
         json.dump(
             {
                 "version": 1,
-                "rules": [{"domain_suffix": [".apple.com", "Mijia Cloud"]}]
+                "rules": [{"domain_suffix": ["apple.com"]}]
                 + gen_rules("accelerated-domains")
                 + gen_rules("apple"),
             },
