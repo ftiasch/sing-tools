@@ -140,20 +140,25 @@
         "outbound": "block"
       },
       {
-        "source_ip_cidr": "172.18.0.10",
+        "ip_is_private": true,
         "outbound": "direct"
       },
       {
         "domain_suffix": [
+          ".cn",
           ".apple.com",
           ".icloud.com",
-          ".roborock.com"
+          ".roborock.com",
+          "cn.bing.com",
+          ".cn.mm.bing.net",
+          ".mi.com",
+          ".qq.com"
         ],
         "outbound": "direct"
       },
       {
         "type": "logical",
-        "mode": "and",
+        "mode": "or",
         "rules": [
           {
             "rule_set": "geoip-cn",
@@ -164,27 +169,6 @@
           }
         ],
         "outbound": "proxy"
-      },
-      {
-        "type": "logical",
-        "mode": "and",
-        "rules": [
-          {
-            "rule_set": "geosite-geolocation-!cn",
-            "invert": true
-          },
-          {
-            "rule_set": [
-              "geoip-cn",
-              "geosite-cn"
-            ]
-          }
-        ],
-        "outbound": "direct"
-      },
-      {
-        "ip_is_private": true,
-        "outbound": "direct"
       }
     ],
     "rule_set": [
@@ -213,7 +197,7 @@
         "path": "/etc/sing-box/ad-block.srs"
       }
     ],
-    "final": "proxy",
+    "final": "direct",
     "auto_detect_interface": true
   },
   "experimental": {
