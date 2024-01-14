@@ -144,6 +144,12 @@
         "outbound": "direct"
       },
       {
+        "domain_suffix": [
+          ".apple.com"
+        ],
+        "outbound": "direct"
+      },
+      {
         "type": "logical",
         "mode": "and",
         "rules": [
