@@ -28,6 +28,11 @@ def down():
         "anti-ad",
         "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/adblock-for-dnsmasq.conf",
     )
+    for f in ("accelerated-domains", "apple"):
+        fetch(
+            f,
+            f"https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/{f}.china.conf",
+        )
 
 
 def okgg_filter(name: str, _: dict) -> bool:
@@ -50,8 +55,25 @@ def select(nameserver: Optional[str] = None) -> Parser:
 
 
 def gen():
-    with open("run/ad-block.json", "w") as f:
-        json.dump({"version": 1, "rules": gen_rules()}, f, ensure_ascii=False, indent=2)
+    with open(f"run/ad-block.json", "w") as f:
+        json.dump(
+            {"version": 1, "rules": gen_rules("anti-ad")},
+            f,
+            ensure_ascii=False,
+            indent=2,
+        )
+    with open(f"run/cn.json", "w") as f:
+        json.dump(
+            {
+                "version": 1,
+                "rules": [{"domain_suffix": [".apple.com", "Mijia Cloud"]}]
+                + gen_rules("accelerated-domains")
+                + gen_rules("apple"),
+            },
+            f,
+            ensure_ascii=False,
+            indent=2,
+        )
     parser = select("223.5.5.5")
     with open("run/config.json", "w") as f:
         json.dump(parser.assemble(), f, ensure_ascii=False, indent=2)

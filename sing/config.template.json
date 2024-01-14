@@ -57,12 +57,12 @@
       },
       {
         "query_type": "CNAME",
-        "rule_set": "geosite-geolocation-!cn",
-        "server": "dns_proxy"
+        "rule_set": "cn",
+        "server": "dns_direct"
       },
       {
         "query_type": "CNAME",
-        "server": "dns_direct"
+        "server": "dns_proxy"
       },
       {
         "query_type": [
@@ -144,60 +144,25 @@
         "outbound": "direct"
       },
       {
-        "domain_suffix": [
-          ".cn",
-          ".apple.com",
-          ".icloud.com",
-          ".roborock.com",
-          "cn.bing.com",
-          ".cn.mm.bing.net",
-          ".mi.com",
-          ".qq.com"
-        ],
+        "rule_set": "cn",
         "outbound": "direct"
-      },
-      {
-        "type": "logical",
-        "mode": "or",
-        "rules": [
-          {
-            "rule_set": "geoip-cn",
-            "invert": true
-          },
-          {
-            "rule_set": "geosite-geolocation-!cn"
-          }
-        ],
-        "outbound": "proxy"
       }
     ],
     "rule_set": [
-      {
-        "type": "remote",
-        "tag": "geoip-cn",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs"
-      },
-      {
-        "type": "remote",
-        "tag": "geosite-cn",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs"
-      },
-      {
-        "type": "remote",
-        "tag": "geosite-geolocation-!cn",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs"
-      },
       {
         "type": "local",
         "tag": "ad-block",
         "format": "binary",
         "path": "/etc/sing-box/ad-block.srs"
+      },
+      {
+        "type": "local",
+        "tag": "cn",
+        "format": "binary",
+        "path": "/etc/sing-box/cn.srs"
       }
     ],
-    "final": "direct",
+    "final": "proxy",
     "auto_detect_interface": true
   },
   "experimental": {
