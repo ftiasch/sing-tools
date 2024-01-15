@@ -57,7 +57,7 @@ def gen():
             "path": "/usr/share/sing-geoip/rule-set/geoip-cn.srs",
         }
     ]
-    for s in ("cn", "category-ads-all"):
+    for s in ("cn", "category-ads-all", "apple", "apple@cn", "steam", "steam@cn"):
         rule_set.append(
             {
                 "type": "local",

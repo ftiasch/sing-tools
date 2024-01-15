@@ -62,6 +62,16 @@
       },
       {
         "query_type": "CNAME",
+        "rule_set": "geosite-apple",
+        "server": "dns_direct"
+      },
+      {
+        "query_type": "CNAME",
+        "rule_set": "geosite-steam",
+        "server": "dns_direct"
+      },
+      {
+        "query_type": "CNAME",
         "server": "dns_proxy"
       },
       {
@@ -152,6 +162,12 @@
           },
           {
             "rule_set": "geosite-cn"
+          },
+          {
+            "rule_set": "geosite-apple@cn"
+          },
+          {
+            "rule_set": "geosite-steam@cn"
           }
         ],
         "outbound": "direct"
