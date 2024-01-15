@@ -141,7 +141,7 @@ class Parser:
                     "outbounds": proxy_tags,
                     "interval": "1m",
                     "tolerance": 50,
-                    "interrupt_exist_connections": True,
+                    "interrupt_exist_connections": False,
                 },
                 {"type": "direct", "tag": "direct"},
                 {"type": "block", "tag": "block"},
