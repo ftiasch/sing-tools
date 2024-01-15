@@ -167,7 +167,7 @@
             "rule_set": "geosite-apple"
           },
           {
-            "rule_set": "geosite-steam"
+            "rule_set": "geosite-steam@cn"
           }
         ],
         "outbound": "direct"
