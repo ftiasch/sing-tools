@@ -66,7 +66,15 @@ def gen():
         json.dump(
             {
                 "version": 1,
-                "rules": [{"domain_suffix": [".apple.com", ".icloud.com"]}]
+                "rules": [
+                    {
+                        "domain_suffix": [
+                            ".apple.com",
+                            ".icloud.com",
+                            ".steamserver.net",  # https://github.com/Loyalsoldier/v2ray-rules-dat/issues/254
+                        ]
+                    }
+                ]
                 + gen_rules("accelerated-domains")
                 + gen_rules("apple"),
             },
