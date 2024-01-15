@@ -44,7 +44,7 @@
         "server": "dns_direct"
       },
       {
-        "rule_set": "ad-block",
+        "rule_set": "geosite-category-ads-all",
         "server": "dns_refused",
         "disable_cache": true
       },
@@ -57,7 +57,7 @@
       },
       {
         "query_type": "CNAME",
-        "rule_set": "cn",
+        "rule_set": "geosite-cn",
         "server": "dns_direct"
       },
       {
@@ -118,7 +118,7 @@
         "outbound": "dns-out"
       },
       {
-        "rule_set": "ad-block",
+        "rule_set": "geosite-category-ads-all",
         "outbound": "block"
       },
       {
@@ -151,30 +151,10 @@
             "rule_set": "geoip-cn"
           },
           {
-            "rule_set": "cn"
+            "rule_set": "geosite-cn"
           }
         ],
         "outbound": "direct"
-      }
-    ],
-    "rule_set": [
-      {
-        "type": "remote",
-        "tag": "geoip-cn",
-        "format": "binary",
-        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs"
-      },
-      {
-        "type": "local",
-        "tag": "ad-block",
-        "format": "binary",
-        "path": "/etc/sing-box/ad-block.srs"
-      },
-      {
-        "type": "local",
-        "tag": "cn",
-        "format": "binary",
-        "path": "/etc/sing-box/cn.srs"
       }
     ],
     "final": "proxy",

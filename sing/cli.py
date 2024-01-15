@@ -24,15 +24,6 @@ def down():
 
     fetch("okgg", "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2")
     fetch("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
-    fetch(
-        "anti-ad",
-        "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/adblock-for-dnsmasq.conf",
-    )
-    for f in ("accelerated-domains", "apple"):
-        fetch(
-            f,
-            f"https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/{f}.china.conf",
-        )
 
 
 def okgg_filter(name: str, _: dict) -> bool:
@@ -55,36 +46,28 @@ def select(nameserver: Optional[str] = None) -> Parser:
 
 
 def gen():
-    with open(f"run/ad-block.json", "w") as f:
-        json.dump(
-            {"version": 1, "rules": gen_rules("anti-ad")},
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
-    with open(f"run/cn.json", "w") as f:
-        json.dump(
-            {
-                "version": 1,
-                "rules": [
-                    {
-                        "domain_suffix": [
-                            ".apple.com",
-                            ".icloud.com",
-                            ".steamserver.net",  # https://github.com/Loyalsoldier/v2ray-rules-dat/issues/254
-                        ]
-                    }
-                ]
-                + gen_rules("accelerated-domains")
-                + gen_rules("apple"),
-            },
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
     parser = select("223.5.5.5")
     with open("run/config.json", "w") as f:
         json.dump(parser.assemble(), f, ensure_ascii=False, indent=2)
+    rule_set = [
+        {
+            "type": "local",
+            "tag": "geoip-cn",
+            "format": "binary",
+            "path": "/usr/share/sing-geoip/rule-set/geoip-cn.srs",
+        }
+    ]
+    for s in ("cn", "category-ads-all"):
+        rule_set.append(
+            {
+                "type": "local",
+                "tag": f"geosite-{s}",
+                "format": "binary",
+                "path": f"/usr/share/sing-geosite/rule-set/geosite-{s}.srs",
+            }
+        )
+    with open("run/rule_set.json", "w") as f:
+        json.dump({"route": {"rule_set": rule_set}}, f, ensure_ascii=False, indent=2)
 
 
 def test():
