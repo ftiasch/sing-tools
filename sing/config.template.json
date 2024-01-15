@@ -164,10 +164,10 @@
             "rule_set": "geosite-cn"
           },
           {
-            "rule_set": "geosite-apple@cn"
+            "rule_set": "geosite-apple"
           },
           {
-            "rule_set": "geosite-steam@cn"
+            "rule_set": "geosite-steam"
           }
         ],
         "outbound": "direct"
