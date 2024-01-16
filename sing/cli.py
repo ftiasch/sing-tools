@@ -1,18 +1,18 @@
 #!/usr/bin/env python
-import os
 import argparse
-import logging
-from typing import Optional
-import requests
-import argcomplete
 import json
+import logging
+import os
+from typing import Optional
 
-from lib import Parser, gen_rules
+import argcomplete
+import requests
 
+from lib import Parser
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(levelname)1.1s%(asctime)s.%(msecs)03d %(process)d %(filename)s:%(lineno)d] %(message)s",
+    format="%(levelname)1.1s%(asctime)s.%(msecs)03d %(process)d %(filename)s:%(lineno)d] %(message)s",  # noqa: E501
     datefmt="%Y%m%d %H:%M:%S",
 )
 
@@ -32,7 +32,7 @@ def okgg_filter(name: str, _: dict) -> bool:
     return False
 
 
-def ww_filter(name: str, __: dict) -> bool:
+def ww_filter(name: str, _: dict) -> bool:
     if "JP" in name:
         return True
     return False
