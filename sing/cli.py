@@ -139,40 +139,6 @@ def gen():
             {"type": "http", "tag": "http-in", "listen": "::", "listen_port": 8001},
         ],
         "route": {
-            "rules": [
-                {"inbound": "dns-in", "outbound": "dns-out"},
-                {
-                    "type": "logical",
-                    "mode": "or",
-                    "rules": [
-                        {"rule_set": geosite("category-ads-all")},
-                        {"network": "tcp", "port": 853},
-                        {"network": "udp", "port": 443},
-                        {"protocol": "stun"},
-                    ],
-                    "outbound": "block",
-                },
-                {
-                    "type": "logical",
-                    "mode": "or",
-                    "rules": [
-                        {"ip_is_private": True, "outbound": "direct"},
-                        {"rule_set": "geoip-cn"},
-                        {"rule_set": geosite("cn")},
-                        {"rule_set": geosite("apple")},
-                        {"rule_set": geosite("steam@cn")},
-                        {
-                            "domain_suffix": [
-                                ".arpa",
-                                ".roborock.com",
-                                ".steamserver.net",
-                                ".syncthing.net",
-                            ]
-                        },
-                    ],
-                    "outbound": "direct",
-                },
-            ],
             "final": "proxy",
             "auto_detect_interface": True,
         },
@@ -187,6 +153,43 @@ def gen():
 
     parser = select(local_dns)
     config["outbounds"] = parser.assemble()
+
+    rules = [
+        {"inbound": "dns-in", "outbound": "dns-out"},
+        {
+            "type": "logical",
+            "mode": "or",
+            "rules": [
+                {"rule_set": geosite("category-ads-all")},
+                {"network": "tcp", "port": 853},
+                {"network": "udp", "port": 443},
+                {"protocol": "stun"},
+            ],
+            "outbound": "block",
+        },
+    ]
+
+    direct_rules = [
+        {"ip_is_private": True},
+        {"rule_set": "geoip-cn"},
+        {
+            "domain_suffix": [
+                ".arpa",
+                ".roborock.com",
+                ".steamserver.net",
+                ".syncthing.net",
+            ]
+        },
+    ]
+    # list subset first
+    for rs in ("apple@cn", "apple", "steam@cn", "cn"):
+        direct_rules.append({"rule_set": geosite(rs)})
+    # list rules to see the rule matches
+    for r in direct_rules:
+        r["outbound"] = "direct"
+        rules.append(r)
+
+    config["route"]["rules"] = rules
 
     rule_set = [
         {
