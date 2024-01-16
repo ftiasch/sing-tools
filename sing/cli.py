@@ -182,7 +182,7 @@ def gen():
         },
     ]
     # list subset first
-    for rs in ("apple@cn", "apple", "steam@cn", "cn"):
+    for rs in ("apple@cn", "apple", "steam@cn", "category-games@cn", "cn"):
         direct_rules.append({"rule_set": geosite(rs)})
     # list rules to see the rule matches
     for r in direct_rules:
