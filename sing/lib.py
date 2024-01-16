@@ -122,7 +122,7 @@ class Parser:
                         "unknown proto|scheme=%s|%s" % (parsed_url.scheme, fragment)
                     )
 
-    def assemble(self) -> dict:
+    def assemble(self) -> list:
         outbounds = self.outbounds.copy()
         proxy_tags = []
         for o in outbounds:
@@ -148,7 +148,7 @@ class Parser:
                 {"type": "dns", "tag": "dns-out"},
             ]
         )
-        return {"outbounds": outbounds}
+        return outbounds
 
 
 def gen_rules(name):

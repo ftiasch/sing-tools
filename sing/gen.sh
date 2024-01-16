@@ -6,5 +6,6 @@ if [[ "$1" == "down" ]]; then
 	python cli.py down
 fi
 python cli.py gen
-sudo sing-box merge /etc/sing-box/custom.json -c config.template.json -c run/config.json -c run/rule_set.json
+sing-box check -c run/config.json
+sudo cp run/config.json /etc/sing-box/custom.json
 sudo systemctl restart sing-box@custom
