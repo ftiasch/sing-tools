@@ -46,6 +46,13 @@ def select(nameserver: Optional[str] = None) -> Parser:
 
 
 def gen():
+    used_geosites = set()
+
+    def geosite(site):
+        g = f"geosite-{site}"
+        used_geosites.add(g)
+        return g
+
     local_dns = "223.5.5.5"
     config = {
         "log": {"level": "error", "timestamp": True},
@@ -74,14 +81,14 @@ def gen():
                 },
                 {"outbound": "any", "server": "dns_direct"},
                 {
-                    "rule_set": "geosite-category-ads-all",
+                    "rule_set": geosite("category-ads-all"),
                     "server": "dns_refused",
                     "disable_cache": True,
                 },
                 {"query_type": ["A", "AAAA"], "server": "dns_fakeip"},
                 {
                     "query_type": "CNAME",
-                    "rule_set": "geosite-cn",
+                    "rule_set": geosite("cn"),
                     "server": "dns_direct",
                 },
                 {
@@ -89,7 +96,7 @@ def gen():
                     "mode": "and",
                     "rules": [
                         {"query_type": "CNAME"},
-                        {"rule_set": "geosite-cn", "invert": True},
+                        {"rule_set": geosite("cn"), "invert": True},
                     ],
                     "server": "dns_proxy",
                 },
@@ -138,7 +145,7 @@ def gen():
                     "type": "logical",
                     "mode": "or",
                     "rules": [
-                        {"rule_set": "geosite-category-ads-all"},
+                        {"rule_set": geosite("category-ads-all")},
                         {"network": "tcp", "port": 853},
                         {"network": "udp", "port": 443},
                         {"protocol": "stun"},
@@ -151,9 +158,9 @@ def gen():
                     "rules": [
                         {"ip_is_private": True, "outbound": "direct"},
                         {"rule_set": "geoip-cn"},
-                        {"rule_set": "geosite-cn"},
-                        {"rule_set": "geosite-apple"},
-                        {"rule_set": "geosite-steam@cn"},
+                        {"rule_set": geosite("cn")},
+                        {"rule_set": geosite("apple")},
+                        {"rule_set": geosite("steam@cn")},
                         {
                             "domain_suffix": [
                                 ".arpa",
@@ -177,8 +184,10 @@ def gen():
             },
         },
     }
+
     parser = select(local_dns)
     config["outbounds"] = parser.assemble()
+
     rule_set = [
         {
             "type": "local",
@@ -187,13 +196,13 @@ def gen():
             "path": "/usr/share/sing-geoip/rule-set/geoip-cn.srs",
         }
     ]
-    for s in ("cn", "category-ads-all", "apple", "apple@cn", "steam", "steam@cn"):
+    for g in used_geosites:
         rule_set.append(
             {
                 "type": "local",
-                "tag": f"geosite-{s}",
+                "tag": g,
                 "format": "binary",
-                "path": f"/usr/share/sing-geosite/rule-set/geosite-{s}.srs",
+                "path": f"/usr/share/sing-geosite/rule-set/{g}.srs",
             }
         )
     config["route"]["rule_set"] = rule_set
