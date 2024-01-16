@@ -171,6 +171,7 @@
           },
           {
             "domain_suffix": [
+              ".arpa",
               ".roborock.com",
               ".steamserver.net",
               ".syncthing.net"
