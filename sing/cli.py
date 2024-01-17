@@ -85,7 +85,7 @@ def gen():
                     "server": "dns_refused",
                     "disable_cache": True,
                 },
-                {"query_type": ["A", "AAAA"], "server": "dns_fakeip"},
+                {"query_type": ["A"], "server": "dns_fakeip"},
                 {
                     "query_type": "CNAME",
                     "rule_set": geosite("cn"),
@@ -101,7 +101,7 @@ def gen():
                     "server": "dns_proxy",
                 },
                 {
-                    "query_type": ["A", "AAAA", "CNAME"],
+                    "query_type": ["A", "CNAME"],
                     "invert": True,
                     "server": "dns_refused",
                     "disable_cache": True,
@@ -110,7 +110,6 @@ def gen():
             "fakeip": {
                 "enabled": True,
                 "inet4_range": "198.18.0.0/15",
-                "inet6_range": "fc00::/18",
             },
             "independent_cache": True,
         },
@@ -130,7 +129,6 @@ def gen():
                 "mtu": 1492,
                 "gso": True,
                 "inet4_address": "172.19.0.1/30",
-                "inet6_address": "fdfe:dcba:9876::1/126",
                 "auto_route": True,
                 "strict_route": True,
                 "stack": "system",
@@ -182,7 +180,7 @@ def gen():
         },
     ]
     # list subset first
-    for rs in ("apple@cn", "apple", "steam@cn", "category-games@cn", "cn"):
+    for rs in ("apple", "steam@cn", "cn"):
         direct_rules.append({"rule_set": geosite(rs)})
     # list rules to see the rule matches
     for r in direct_rules:
