@@ -43,7 +43,7 @@ def ww_filter(name: str, _: dict) -> bool:
 def select(nameserver: Optional[str] = None) -> Parser:
     parser = Parser(nameserver)
     parser.parse("okgg", okgg_filter)
-    parser.parse("ww", ww_filter)
+    # parser.parse("ww", ww_filter)
     return parser
 
 
