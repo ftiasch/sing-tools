@@ -64,7 +64,7 @@ def gen():
 
     local_dns = "223.5.5.5"
     config = {
-        "log": {"level": "error", "timestamp": True},
+        "log": {"level": "info", "timestamp": True},
         "dns": {
             "servers": [
                 {
@@ -90,7 +90,7 @@ def gen():
                 },
                 {"outbound": "any", "server": "dns_direct"},
                 {
-                    "rule_set": v2ray_rule("reject-list"),
+                    "rule_set": geosite("category-ads-all"),
                     "server": "dns_refused",
                     "disable_cache": True,
                 },
@@ -167,7 +167,7 @@ def gen():
             "type": "logical",
             "mode": "or",
             "rules": [
-                {"rule_set": v2ray_rule("reject-list")},
+                {"rule_set": geosite("category-ads-all")},
                 {"network": "tcp", "port": 853},
                 {"network": "udp", "port": 443},
                 {"protocol": "stun"},
