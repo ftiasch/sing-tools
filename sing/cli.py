@@ -27,21 +27,23 @@ def down():
 
 
 def okgg_filter(name: str, _: dict) -> bool:
-    if "AI" in name:
-        return True
+    for loc in ("日本", "新加坡", "HongKong"):
+        if loc in name:
+            return True
     return False
 
 
 def ww_filter(name: str, _: dict) -> bool:
-    if "JP" in name:
-        return True
+    for loc in ("HK", "JP", "TW"):
+        if loc in name:
+            return True
     return False
 
 
 def select(nameserver: Optional[str] = None) -> Parser:
     parser = Parser(nameserver)
     parser.parse("okgg", okgg_filter)
-    # parser.parse("ww", ww_filter)
+    parser.parse("ww", ww_filter)
     return parser
 
 

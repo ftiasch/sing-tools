@@ -111,8 +111,8 @@ class Parser:
                             "password": uuid,
                             "tls": {
                                 "enabled": True,
-                                "insecure": query_params.get("allowInsecure", "0")
-                                == "1",
+                                "insecure": query_params.get("allowInsecure", ["0"])
+                                == ["1"],
                                 "server_name": query_params["peer"][0],
                             },
                         },
