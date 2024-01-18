@@ -1,6 +1,5 @@
 import base64
 import logging
-import re
 from typing import Callable, Optional
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -149,16 +148,3 @@ class Parser:
             ]
         )
         return outbounds
-
-
-def gen_rules(name):
-    pattern = r"(address|server)=/([^/]+)/"
-    rules = [{"domain_suffix": []}]
-    with open(f"run/{name}.txt") as f:
-        for line in f.readlines():
-            match = re.search(pattern, line)
-            if match:
-                # Extract the domain from the matched group
-                domain = match.group(2)
-                rules[0]["domain_suffix"].append("." + domain)
-    return rules
