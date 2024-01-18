@@ -3,6 +3,7 @@ import argparse
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Optional
 
 import argcomplete
@@ -55,6 +56,12 @@ def gen():
         used_geosites.add(g)
         return g
 
+    used_v2ray_rules = set()
+
+    def v2ray_rule(rule):
+        used_v2ray_rules.add(rule)
+        return rule
+
     local_dns = "223.5.5.5"
     config = {
         "log": {"level": "error", "timestamp": True},
@@ -83,7 +90,7 @@ def gen():
                 },
                 {"outbound": "any", "server": "dns_direct"},
                 {
-                    "rule_set": geosite("category-ads-all"),
+                    "rule_set": v2ray_rule("reject-list"),
                     "server": "dns_refused",
                     "disable_cache": True,
                 },
@@ -160,7 +167,7 @@ def gen():
             "type": "logical",
             "mode": "or",
             "rules": [
-                {"rule_set": geosite("category-ads-all")},
+                {"rule_set": v2ray_rule("reject-list")},
                 {"network": "tcp", "port": 853},
                 {"network": "udp", "port": 443},
                 {"protocol": "stun"},
@@ -206,6 +213,15 @@ def gen():
                 "tag": g,
                 "format": "binary",
                 "path": f"/usr/share/sing-geosite/rule-set/{g}.srs",
+            }
+        )
+    for r in used_v2ray_rules:
+        rule_set.append(
+            {
+                "type": "local",
+                "tag": r,
+                "format": "binary",
+                "path": str(Path(os.getcwd()) / "run" / f"{r}.srs"),
             }
         )
     config["route"]["rule_set"] = rule_set
