@@ -9,13 +9,10 @@ from typing import Optional
 import argcomplete
 import requests
 
+from common import setup_logging
 from lib import Parser
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)1.1s%(asctime)s.%(msecs)03d %(process)d %(filename)s:%(lineno)d] %(message)s",  # noqa: E501
-    datefmt="%Y%m%d %H:%M:%S",
-)
+setup_logging()
 
 
 def down():
@@ -58,11 +55,15 @@ def gen():
 
     used_v2ray_rules = set()
 
-    def v2ray_rule(rule):
+    def local_rule(rule):
         used_v2ray_rules.add(rule)
         return rule
 
     local_dns = "223.5.5.5"
+
+    def get_adblocking_rule_set():
+        return geosite("category-ads-all")
+
     config = {
         "log": {"level": "info", "timestamp": True},
         "dns": {
@@ -90,7 +91,7 @@ def gen():
                 },
                 {"outbound": "any", "server": "dns_direct"},
                 {
-                    "rule_set": geosite("category-ads-all"),
+                    "rule_set": get_adblocking_rule_set(),
                     "server": "dns_refused",
                     "disable_cache": True,
                 },
@@ -167,7 +168,7 @@ def gen():
             "type": "logical",
             "mode": "or",
             "rules": [
-                {"rule_set": geosite("category-ads-all")},
+                {"rule_set": get_adblocking_rule_set()},
                 {"network": "tcp", "port": 853},
                 {"network": "udp", "port": 443},
                 {"protocol": "stun"},
