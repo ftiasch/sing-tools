@@ -119,7 +119,7 @@ def gen():
             ],
             "fakeip": {
                 "enabled": True,
-                "inet4_range": "198.18.0.0/15",
+                "inet4_range": "10.32.0.0/12",
             },
             "independent_cache": True,
         },
