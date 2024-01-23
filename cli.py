@@ -175,6 +175,10 @@ def gen():
             ],
             "outbound": "block",
         },
+        {
+            "rule_set": geosite("google"),
+            "outbound": "proxy",
+        },
     ]
 
     direct_rules = [
