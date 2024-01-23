@@ -45,6 +45,9 @@ def select(nameserver: Optional[str] = None) -> Parser:
     return parser
 
 
+LOCAL_DNS = "223.5.5.5"
+
+
 def gen():
     used_geosites = set()
 
@@ -53,15 +56,13 @@ def gen():
         used_geosites.add(g)
         return g
 
-    used_v2ray_rules = set()
+    used_local_rules = set()
 
     def local_rule(rule):
-        used_v2ray_rules.add(rule)
+        used_local_rules.add(rule)
         return rule
 
-    local_dns = "223.5.5.5"
-
-    def get_adblocking_rule_set():
+    def adblock_rule():
         return geosite("category-ads-all")
 
     config = {
@@ -76,7 +77,7 @@ def gen():
                 },
                 {
                     "tag": "dns_direct",
-                    "address": local_dns,
+                    "address": LOCAL_DNS,
                     "strategy": "ipv4_only",
                     "detour": "direct",
                 },
@@ -91,7 +92,7 @@ def gen():
                 },
                 {"outbound": "any", "server": "dns_direct"},
                 {
-                    "rule_set": get_adblocking_rule_set(),
+                    "rule_set": adblock_rule(),
                     "server": "dns_refused",
                     "disable_cache": True,
                 },
@@ -159,7 +160,7 @@ def gen():
         },
     }
 
-    parser = select(local_dns)
+    parser = select(LOCAL_DNS)
     config["outbounds"] = parser.assemble()
 
     rules = [
@@ -168,18 +169,27 @@ def gen():
             "type": "logical",
             "mode": "or",
             "rules": [
-                {"rule_set": get_adblocking_rule_set()},
+                {"rule_set": adblock_rule()},
                 {"network": "tcp", "port": 853},
                 {"network": "udp", "port": 443},
                 {"protocol": "stun"},
             ],
             "outbound": "block",
         },
+    ]
+
+    proxy_rules = [
         {
             "rule_set": geosite("google"),
-            "outbound": "proxy",
-        },
+        }
     ]
+    for r in proxy_rules:
+        rules.append(
+            {
+                **r,
+                "outbound": "proxy",
+            }
+        )
 
     direct_rules = [
         {"ip_is_private": True},
@@ -195,11 +205,18 @@ def gen():
     ]
     # list subset first
     for rs in ("apple", "steam@cn", "cn"):
-        direct_rules.append({"rule_set": geosite(rs)})
-    # list rules to see the rule matches
+        direct_rules.append(
+            {
+                "rule_set": geosite(rs),
+            }
+        )
     for r in direct_rules:
-        r["outbound"] = "direct"
-        rules.append(r)
+        rules.append(
+            {
+                **r,
+                "outbound": "direct",
+            }
+        )
 
     config["route"]["rules"] = rules
 
@@ -220,7 +237,7 @@ def gen():
                 "path": f"/usr/share/sing-geosite/rule-set/{g}.srs",
             }
         )
-    for r in used_v2ray_rules:
+    for r in used_local_rules:
         rule_set.append(
             {
                 "type": "local",
