@@ -135,6 +135,13 @@ def gen():
                 "override_port": 53,
             },
             {
+                "type": "direct",
+                "tag": "direct-in",
+                "listen": "::",
+                "listen_port": 23378,
+                "network": "tcp",
+            },
+            {
                 "type": "tun",
                 "tag": "tun-in",
                 "mtu": 1492,
