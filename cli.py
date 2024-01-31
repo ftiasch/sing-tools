@@ -25,7 +25,9 @@ def down():
 
 
 def okgg_filter(name: str, _: dict) -> bool:
-    for loc in ("日本", "新加坡", "HongKong"):
+    if "IPv6" in name:
+        return False
+    for loc in ("日本", "韩国", "新加坡", "Singapore", "香港", "HongKong"):
         if loc in name:
             return True
     return False
@@ -41,7 +43,7 @@ def ww_filter(name: str, _: dict) -> bool:
 def select(nameserver: Optional[str] = None) -> Parser:
     parser = Parser(nameserver)
     parser.parse("okgg", okgg_filter)
-    # parser.parse("ww", ww_filter)
+    parser.parse("ww", ww_filter)
     return parser
 
 
