@@ -71,7 +71,7 @@ def gen():
         return geosite("category-ads-all")
 
     config = {
-        "log": {"level": "info", "timestamp": True},
+        "log": {"level": "error", "timestamp": True},
         "dns": {
             "servers": [
                 {
