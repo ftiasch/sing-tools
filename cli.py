@@ -75,6 +75,11 @@ def gen():
         "dns": {
             "servers": [
                 {
+                    "tag": "dns_local",
+                    "address": "local",
+                    "strategy": "ipv4_only",
+                },
+                {
                     "tag": "dns_proxy",
                     "address": "tls://8.8.8.8",
                     "strategy": "ipv4_only",
@@ -91,6 +96,10 @@ def gen():
                 {"tag": "dns_fakeip", "address": "fakeip"},
             ],
             "rules": [
+                {
+                    "domain_suffix": [".local"],
+                    "server": "dns_local",
+                },
                 {
                     "domain_suffix": [".bopufund.com", ".ftiasch.xyz", ".limao.tech"],
                     "server": "dns_direct",
