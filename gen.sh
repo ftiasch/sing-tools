@@ -33,5 +33,5 @@ fi
 python cli.py gen
 sing-box check -c run/config.json
 
-sudo cp run/config.json /etc/sing-box/custom.json
-sudo systemctl restart sing-box@custom
+sudo cp run/config.json /etc/sing-box/config.json
+sudo systemctl restart sing-box
