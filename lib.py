@@ -63,7 +63,10 @@ class Parser:
         with open(f"run/{group_name}.txt") as f:
             share_links = b64decode(f.read()).decode("utf-8").splitlines()
         for share_link in share_links:
-            parsed_url = urlparse(share_link)
+            try:
+                parsed_url = urlparse(share_link)
+            except ValueError:
+                continue
             fragment = unquote(parsed_url.fragment, encoding="utf-8")
             query_params = parse_qs(parsed_url.query)
             match parsed_url.scheme:
