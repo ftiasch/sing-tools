@@ -17,8 +17,13 @@ setup_logging()
 
 def down():
     def fetch(dst, src):
-        with open(f"run/{dst}.txt", "w") as f:
-            f.write(requests.get(src).text)
+        logging.info('Downloading %s' %(dst))
+        try:
+            content = requests.get(src).text
+            with open(f"run/{dst}.txt", "w") as f:
+                f.write(content)
+        except:
+            logging.exception("")
 
     fetch("okgg", "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2")
     fetch("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
@@ -46,8 +51,8 @@ def ww_filter(name: str, _: dict) -> bool:
 
 def select(nameserver: Optional[str] = None) -> Parser:
     parser = Parser(nameserver)
-    parser.parse("okgg", okgg_filter)
-    # parser.parse("ww", ww_filter)
+    # parser.parse("okgg", okgg_filter)
+    parser.parse("ww", ww_filter)
     return parser
 
 
@@ -102,7 +107,13 @@ def gen():
                     "server": "dns_local",
                 },
                 {
-                    "domain_suffix": [".bopufund.com", ".ftiasch.xyz", ".limao.tech", ".ntp.org"],
+                    "domain_suffix": [
+                        ".archlinux.org",
+                        ".bopufund.com",
+                        ".ftiasch.xyz",
+                        ".limao.tech",
+                        ".ntp.org",
+                    ],
                     "server": "dns_direct",
                 },
                 {"outbound": "any", "server": "dns_direct"},
