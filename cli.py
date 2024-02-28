@@ -15,9 +15,9 @@ from lib import Parser
 setup_logging()
 
 
-def down():
+def down(args):
     def fetch(dst, src):
-        logging.info('Downloading %s' %(dst))
+        logging.info("Downloading %s" % (dst))
         try:
             content = requests.get(src).text
             with open(f"run/{dst}.txt", "w") as f:
@@ -49,17 +49,19 @@ def ww_filter(name: str, _: dict) -> bool:
     return False
 
 
-def select(nameserver: Optional[str] = None) -> Parser:
+def select(args, nameserver: Optional[str] = None) -> Parser:
     parser = Parser(nameserver)
-    # parser.parse("okgg", okgg_filter)
-    parser.parse("ww", ww_filter)
+    if "okgg" in args.select:
+        parser.parse("okgg", okgg_filter)
+    if "ww" in args.select:
+        parser.parse("ww", ww_filter)
     return parser
 
 
 LOCAL_DNS = "223.5.5.5"
 
 
-def gen():
+def gen(args):
     used_geosites = set()
 
     def geosite(site):
@@ -110,7 +112,7 @@ def gen():
                     "domain_suffix": [
                         ".archlinux.org",
                         ".bopufund.com",
-                        ".ftiasch.xyz",
+                        "ftiasch.xyz",
                         ".limao.tech",
                         ".ntp.org",
                     ],
@@ -193,7 +195,7 @@ def gen():
         },
     }
 
-    parser = select(LOCAL_DNS)
+    parser = select(args, LOCAL_DNS)
     config["outbounds"] = parser.assemble()
 
     rules = [
@@ -284,11 +286,8 @@ def gen():
         json.dump(config, f, ensure_ascii=False, indent=2)
 
 
-def test():
-    parser = select()
-    print(
-        json.dumps([o["tag"] for o in parser.outbounds], ensure_ascii=False, indent=2)
-    )
+def list_str(values):
+    return values.split(",")
 
 
 def main():
@@ -298,11 +297,12 @@ def main():
     argcomplete.autocomplete(parser)
     parser.add_argument(
         "func",
-        choices=["gen", "test", "down"],
+        choices=["gen", "down"],
         default="gen_dry_run",
     )
+    parser.add_argument("-s", "--select", type=list_str, default="okgg")
     args = parser.parse_args()
-    globals().get(args.func)()
+    globals().get(args.func)(args)
 
 
 if __name__ == "__main__":
