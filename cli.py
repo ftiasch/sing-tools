@@ -181,6 +181,12 @@ def gen(args):
                 "sniff": True,
             },
             {"type": "http", "tag": "http-in", "listen": "::", "listen_port": 8001},
+            {
+                "type": "http",
+                "tag": "http-direct-in",
+                "listen": "::",
+                "listen_port": 8002,
+            },
         ],
         "route": {
             "final": "proxy",
@@ -200,6 +206,7 @@ def gen(args):
 
     rules = [
         {"inbound": "dns-in", "outbound": "dns-out"},
+        {"inbound": "http-direct-in", "outbound": "direct"},
         {
             "type": "logical",
             "mode": "or",
