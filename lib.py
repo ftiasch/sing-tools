@@ -138,8 +138,14 @@ class Parser:
         outbounds.extend(
             [
                 {
-                    "type": "urltest",
+                    "type": "selector",
                     "tag": "proxy",
+                    "outbounds": ["auto"] + proxy_tags,
+                    "interrupt_exist_connections": False,
+                },
+                {
+                    "type": "urltest",
+                    "tag": "auto",
                     "outbounds": proxy_tags,
                     "interval": "1m",
                     "tolerance": 50,

@@ -30,23 +30,11 @@ def down(args):
 
 
 def okgg_filter(name: str, _: dict) -> bool:
-    for t in ("Test",):
-        if t in name:
-            return False
     return True
-    # if "AI" not in name.split("-"):
-    #     return False
-    # for loc in ("日本", "韩国", "新加坡", "Singapore", "Tailand", "香港", "HongKong"):
-    #     if loc in name:
-    #         return True
-    # return False
 
 
 def ww_filter(name: str, _: dict) -> bool:
-    for loc in ("HK", "JP", "TW"):
-        if loc in name:
-            return True
-    return False
+    return True
 
 
 def select(args, nameserver: Optional[str] = None) -> Parser:
