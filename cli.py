@@ -29,8 +29,21 @@ def down(args):
     fetch("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
 
+def guess_okgg_region(name: str) -> str:
+    if "美国" in name or "USA" in name:
+        return "美国"
+    if "香港" in name or "HongKong" in name:
+        return "香港"
+    if "日本" in name:
+        return "日本"
+    if "新加坡" in name:
+        return "新加坡"
+    return "Others"
+
+
 def okgg_filter(name: str, _: dict) -> list[str]:
-    return ["auto", "okgg"]
+    region = guess_okgg_region(name)
+    return ["auto", "okgg", f"okgg {region}"]
 
 
 def ww_filter(name: str, _: dict) -> list[str]:
