@@ -18,6 +18,7 @@ class Parser:
     nameserver: Optional[str]
     resolver: dns.resolver.Resolver
     outbounds: list[dict]
+    groups: dict[list[str]]
 
     def __init__(self, nameserver: Optional[str] = None):
         self.nameserver = nameserver
@@ -25,6 +26,7 @@ class Parser:
         if self.nameserver is not None:
             self.resolver.nameservers = [self.nameserver]
         self.outbounds = []
+        self.groups = {}
 
     def resolve(self, host: str) -> str:
         if self.nameserver is None:
@@ -52,11 +54,29 @@ class Parser:
             logging.exception("DNS error")
             return host
 
+    def has_tag(self, tag: str):
+        for o in self.outbounds:
+            if o["tag"] == tag:
+                return True
+        return False
+
+    def get_tag(self, otag: str) -> str:
+        count, tag = 0, otag
+        while self.has_tag(tag):
+            count += 1
+            tag = otag + f" #{count}"
+        return tag
+
     def parse(self, group_name: str, fn: Callable[[str, dict], bool]):
         def try_add(fragment, outbound):
-            if fn(fragment, outbound):
-                outbound["tag"] = f"[{group_name}] {fragment}"
+            groups = fn(fragment, outbound)
+            if groups:
+                outbound["tag"] = self.get_tag(fragment)
                 self.outbounds.append(outbound)
+                for g in groups:
+                    if g not in self.groups:
+                        self.groups[g] = []
+                    self.groups[g].append(outbound["tag"])
             else:
                 logging.warning("filtered|%s" % (fragment))
 
@@ -125,32 +145,33 @@ class Parser:
                     )
 
     def assemble(self) -> list:
-        outbounds = self.outbounds.copy()
         proxy_tags = []
-        for o in outbounds:
-            tag = o["tag"]
-            count = 0
-            while tag in proxy_tags:
-                count += 1
-                tag = o["tag"] + f" #{count}"
-            o["tag"] = tag
-            proxy_tags.append(tag)
-        outbounds.extend(
-            [
-                {
-                    "type": "selector",
-                    "tag": "proxy",
-                    "outbounds": ["auto"] + proxy_tags,
-                    "interrupt_exist_connections": False,
-                },
+        for g in self.groups:
+            proxy_tags.append(g)
+        for o in self.outbounds:
+            proxy_tags.append(o["tag"])
+        outbounds = self.outbounds.copy()
+        outbounds.append(
+            {
+                "type": "selector",
+                "tag": "proxy",
+                "outbounds": proxy_tags,
+                "interrupt_exist_connections": False,
+            },
+        )
+        for g, tags in self.groups.items():
+            outbounds.append(
                 {
                     "type": "urltest",
-                    "tag": "auto",
-                    "outbounds": proxy_tags,
+                    "tag": g,
+                    "outbounds": tags,
                     "interval": "1m",
                     "tolerance": 50,
                     "interrupt_exist_connections": False,
                 },
+            )
+        outbounds.extend(
+            [
                 {"type": "direct", "tag": "direct"},
                 {"type": "block", "tag": "block"},
                 {"type": "dns", "tag": "dns-out"},

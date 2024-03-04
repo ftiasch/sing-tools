@@ -29,12 +29,12 @@ def down(args):
     fetch("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
 
-def okgg_filter(name: str, _: dict) -> bool:
-    return True
+def okgg_filter(name: str, _: dict) -> list[str]:
+    return ["auto", "okgg"]
 
 
-def ww_filter(name: str, _: dict) -> bool:
-    return True
+def ww_filter(name: str, _: dict) -> list[str]:
+    return ["auto", "ww"]
 
 
 def select(args, nameserver: Optional[str] = None) -> Parser:
