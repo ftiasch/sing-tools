@@ -86,15 +86,10 @@ def gen(args):
         used_geosites.add(g)
         return g
 
-    used_local_rules = set()
-
-    def local_rule(rule):
-        used_local_rules.add(rule)
-        return rule
-
     def adblock_rule():
         return geosite("category-ads-all")
 
+    prefix = Path(args.prefix)
     config = {
         "log": {"level": "error", "timestamp": True},
         "dns": {
@@ -214,7 +209,7 @@ def gen(args):
             "cache_file": {"enabled": True, "path": "cache.db", "store_fakeip": True},
             "clash_api": {
                 "external_controller": "0.0.0.0:9090",
-                "external_ui": "/usr/share/yacd",
+                "external_ui": str(prefix / "yacd"),
             },
         },
     }
@@ -288,7 +283,7 @@ def gen(args):
             "type": "local",
             "tag": "geoip-cn",
             "format": "binary",
-            "path": "/usr/share/sing-geoip/rule-set/geoip-cn.srs",
+            "path": str(prefix / "sing-geoip" / "rule-set" / "geoip-cn.srs"),
         }
     ]
     for g in used_geosites:
@@ -297,18 +292,10 @@ def gen(args):
                 "type": "local",
                 "tag": g,
                 "format": "binary",
-                "path": f"/usr/share/sing-geosite/rule-set/{g}.srs",
+                "path": str(prefix / "sing-geosite" / "rule-set" / f"{g}.srs"),
             }
         )
-    for r in used_local_rules:
-        rule_set.append(
-            {
-                "type": "local",
-                "tag": r,
-                "format": "binary",
-                "path": str(Path(os.getcwd()) / "run" / f"{r}.srs"),
-            }
-        )
+
     config["route"]["rule_set"] = rule_set
     with open("run/config.json", "w") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
@@ -329,6 +316,7 @@ def main():
         default="gen_dry_run",
     )
     parser.add_argument("-s", "--select", type=list_str, default="okgg")
+    parser.add_argument("-p", "--prefix", default="/usr/share")
     args = parser.parse_args()
     globals().get(args.func)(args)
 
