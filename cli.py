@@ -240,7 +240,10 @@ def gen(args):
     proxy_rules = [
         {
             "rule_set": geosite("google"),
-        }
+        },
+        {
+            "ip_cidr": ["13.115.121.128"],
+        },
     ]
     for r in proxy_rules:
         rules.append(
