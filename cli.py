@@ -30,12 +30,14 @@ def down(args):
     fetch("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
 
-def guess_okgg_region(name: str) -> str:
+def guess_region(name: str) -> str:
     config = {
-        "US": ["USA", "美国"],
-        "HK": ["HongKong", "香港", "🇭🇰"],
-        "JP": ["Osaka", "日本", "🇯🇵"],
+        "US": ["US", "美国"],
+        "HK": ["HongKong", "HK", "港", "🇭🇰"],
+        "JP": ["Osaka", "JP", "日", "🇯🇵"],
         "SG": ["新加坡"],
+        "TW": ["TW"],
+        "KR": ["KR"],
         "MY": [
             "吉隆坡",
             "🇲🇾",
@@ -48,16 +50,20 @@ def guess_okgg_region(name: str) -> str:
     return "N/A"
 
 
-def okgg_filter(name: str, _: dict) -> list[str]:
-    region = guess_okgg_region(name)
-    tags = ["auto", "okgg", f"okgg {region}"]
+def common_filter(prefix: str, name: str) -> list[str]:
+    region = guess_region(name)
+    tags = ["auto", prefix, f"{prefix} {region}"]
     if region in ["HK", "JP", "SG", "MY"]:
-        tags.append("okgg Asia")
+        tags.append(f"{prefix} Asia")
     return tags
 
 
+def okgg_filter(name: str, _: dict) -> list[str]:
+    return common_filter("okgg", name)
+
+
 def ww_filter(name: str, _: dict) -> list[str]:
-    return ["auto", "ww"]
+    return common_filter("ww", name.split("·")[1])
 
 
 def select(args, nameserver: Optional[str] = None) -> Parser:

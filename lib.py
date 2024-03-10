@@ -148,8 +148,8 @@ class Parser:
         proxy_tags = []
         for g in self.groups:
             proxy_tags.append(g)
-        for o in self.outbounds:
-            proxy_tags.append(o["tag"])
+        # for o in self.outbounds:
+        #     proxy_tags.append(o["tag"])
         outbounds = self.outbounds.copy()
         outbounds.append(
             {
