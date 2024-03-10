@@ -2,6 +2,7 @@ import base64
 import logging
 from typing import Callable, Optional
 from urllib.parse import parse_qs, unquote, urlparse
+import re
 
 import dns.exception
 import dns.rdatatype
@@ -13,6 +14,11 @@ def b64decode(b: str) -> bytes:
         b += "="
     return base64.urlsafe_b64decode(b)
 
+
+def is_valid_ip(ip):
+    ipv4_pattern = re.compile("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+    ipv6_pattern = re.compile("^([0-9a-fA-F]{1,4}:){7}([0-9a-fA-F]{1,4})$")
+    return bool(ipv4_pattern.match(ip)) or bool(ipv6_pattern.match(ip))
 
 class Parser:
     nameserver: Optional[str]
@@ -29,7 +35,7 @@ class Parser:
         self.groups = {}
 
     def resolve(self, host: str) -> str:
-        if self.nameserver is None:
+        if self.nameserver is None or is_valid_ip(host):
             return host
         try:
             logging.info("DNS query|%s" % (host))
