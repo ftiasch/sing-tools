@@ -200,7 +200,7 @@ def gw_gen(args):
             "cache_file": {"enabled": True, "path": "cache.db", "store_fakeip": True},
             "clash_api": {
                 "external_controller": "0.0.0.0:9090",
-                "external_ui": str(prefix / "yacd"),
+                "external_ui": str(prefix / "yacd-meta"),
             },
         },
     }
