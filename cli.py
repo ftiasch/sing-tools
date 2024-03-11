@@ -96,20 +96,15 @@ def gw_gen(args):
         "dns": {
             "servers": [
                 {
-                    "tag": "dns_local",
-                    "address": "local",
-                    "strategy": "prefer_ipv4",
-                },
-                {
                     "tag": "dns_proxy",
                     "address": "tls://8.8.8.8",
-                    "strategy": "prefer_ipv4",
+                    "strategy": "ipv4_only",
                     "detour": "proxy",
                 },
                 {
                     "tag": "dns_direct",
                     "address": LOCAL_DNS,
-                    "strategy": "prefer_ipv4",
+                    "strategy": "ipv4_only",
                     "detour": "direct",
                 },
                 {"tag": "dns_success", "address": "rcode://success"},
@@ -117,10 +112,6 @@ def gw_gen(args):
                 {"tag": "dns_fakeip", "address": "fakeip"},
             ],
             "rules": [
-                {
-                    "domain_suffix": [".local"],
-                    "server": "dns_local",
-                },
                 {
                     "domain_suffix": [
                         ".archlinux.org",
@@ -137,7 +128,7 @@ def gw_gen(args):
                     "server": "dns_refused",
                     "disable_cache": True,
                 },
-                {"query_type": ["A", "AAAA"], "server": "dns_fakeip"},
+                {"query_type": ["A"], "server": "dns_fakeip"},
                 {
                     "query_type": "CNAME",
                     "rule_set": geosite("cn"),
@@ -153,7 +144,7 @@ def gw_gen(args):
                     "server": "dns_proxy",
                 },
                 {
-                    "query_type": ["A", "AAAA", "CNAME"],
+                    "query_type": ["A", "CNAME"],
                     "invert": True,
                     "server": "dns_refused",
                     "disable_cache": True,
@@ -162,7 +153,6 @@ def gw_gen(args):
             "fakeip": {
                 "enabled": True,
                 "inet4_range": "10.32.0.0/12",
-                "inet6_range": "fc00::/18",
             },
             "independent_cache": True,
         },
