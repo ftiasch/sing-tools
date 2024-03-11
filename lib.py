@@ -16,15 +16,18 @@ def b64decode(b: str) -> bytes:
 
 
 def is_valid_ip(ip):
-    ipv4_pattern = re.compile("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+    ipv4_pattern = re.compile(
+        r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+    )
     ipv6_pattern = re.compile("^([0-9a-fA-F]{1,4}:){7}([0-9a-fA-F]{1,4})$")
     return bool(ipv4_pattern.match(ip)) or bool(ipv6_pattern.match(ip))
+
 
 class Parser:
     nameserver: Optional[str]
     resolver: dns.resolver.Resolver
     outbounds: list[dict]
-    groups: dict[list[str]]
+    groups: dict[str, list[str]]
 
     def __init__(self, nameserver: Optional[str] = None):
         self.nameserver = nameserver
@@ -73,7 +76,7 @@ class Parser:
             tag = otag + f" #{count}"
         return tag
 
-    def parse(self, group_name: str, fn: Callable[[str, dict], bool]):
+    def parse(self, group_name: str, fn: Callable[[str, dict], list[str]]):
         def try_add(fragment, outbound):
             groups = fn(fragment, outbound)
             if groups:
