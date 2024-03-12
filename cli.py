@@ -67,8 +67,8 @@ def ww_filter(name: str, _: dict) -> list[str]:
     return common_filter("ww", name.split("·")[1])
 
 
-def select(args, nameserver: Optional[dns.nameserver.Nameserver] = None) -> Parser:
-    parser = Parser(nameserver)
+def select(args) -> Parser:
+    parser = Parser(args.nameserver, ipv6=args.ipv6)
     if "okgg" in args.select:
         parser.parse("okgg", okgg_filter)
     if "ww" in args.select:
@@ -203,7 +203,7 @@ def gw_gen(args):
         },
     }
 
-    parser = select(args, "223.5.5.5")
+    parser = select(args)
     config["outbounds"] = parser.assemble()
 
     rules = [
@@ -306,6 +306,8 @@ def main():
     )
     parser.add_argument("-s", "--select", type=list_str, default="okgg")
     parser.add_argument("-p", "--prefix", default="/usr/share")
+    parser.add_argument("-n", "--nameserver", default="223.5.5.5")
+    parser.add_argument("--ipv6", default=False, action="store_true")
     args = parser.parse_args()
     globals().get(args.func)(args)
 

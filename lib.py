@@ -26,19 +26,23 @@ def is_valid_ip(ip):
 
 class Parser:
     nameserver: Optional[dns.nameserver.Nameserver]
+    ipv6: bool
     resolver: dns.resolver.Resolver
     outbounds: list[dict]
     groups: dict[str, list[str]]
 
-    def __init__(self, nameserver: Optional[dns.nameserver.Nameserver] = None):
+    def __init__(
+        self, nameserver: Optional[dns.nameserver.Nameserver] = None, ipv6=False
+    ):
         self.nameserver = nameserver
+        self.ipv6 = ipv6
         self.resolver = dns.resolver.Resolver()
         if self.nameserver is not None:
             self.resolver.nameservers = [self.nameserver]
         self.outbounds = []
         self.groups = {}
 
-    def resolve(self, host: str) -> str:
+    def resolve(self, host: str) -> Optional[str]:
         if self.nameserver is None or is_valid_ip(host):
             return host
         try:
@@ -49,7 +53,7 @@ class Parser:
                 tcp=True,
                 raise_on_no_answer=False,
             )
-            if not answers:
+            if not answers and self.ipv6:
                 logging.info("DNS no A answers")
                 answers = self.resolver.resolve(
                     host,
@@ -57,12 +61,14 @@ class Parser:
                     tcp=True,
                     raise_on_no_answer=True,
                 )
+            else:
+                return None
             answer = answers[0].to_text()
             logging.info("DNS answer|%s" % (answer))
             return answer
         except dns.exception.DNSException:
             logging.exception("DNS error")
-            return host
+            return None
 
     def has_tag(self, tag: str):
         for o in self.outbounds:
@@ -110,23 +116,25 @@ class Parser:
                     ):
                         uuid, hostname_part = parsed_url.netloc.split("@", 1)
                         server, server_port = hostname_part.split(":", 1)
-                        try_add(
-                            fragment,
-                            {
-                                "type": "vless",
-                                "server": self.resolve(server),
-                                "server_port": int(server_port),
-                                "uuid": uuid,
-                                "tls": {
-                                    "enabled": True,
-                                    "server_name": query_params["sni"][0],
+                        server = self.resolve(server)
+                        if server:
+                            try_add(
+                                fragment,
+                                {
+                                    "type": "vless",
+                                    "server": server,
+                                    "server_port": int(server_port),
+                                    "uuid": uuid,
+                                    "tls": {
+                                        "enabled": True,
+                                        "server_name": query_params["sni"][0],
+                                    },
+                                    "transport": {
+                                        "type": "grpc",
+                                        "service_name": query_params["serviceName"][0],
+                                    },
                                 },
-                                "transport": {
-                                    "type": "grpc",
-                                    "service_name": query_params["serviceName"][0],
-                                },
-                            },
-                        )
+                            )
                     else:
                         logging.warning(
                             "unknown vless|%s|%s" % (query_params, fragment)
