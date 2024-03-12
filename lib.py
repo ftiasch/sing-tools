@@ -7,6 +7,7 @@ import re
 import dns.exception
 import dns.rdatatype
 import dns.resolver
+import dns.nameserver
 
 
 def b64decode(b: str) -> bytes:
@@ -24,12 +25,12 @@ def is_valid_ip(ip):
 
 
 class Parser:
-    nameserver: Optional[str]
+    nameserver: Optional[dns.nameserver.Nameserver]
     resolver: dns.resolver.Resolver
     outbounds: list[dict]
     groups: dict[str, list[str]]
 
-    def __init__(self, nameserver: Optional[str] = None):
+    def __init__(self, nameserver: Optional[dns.nameserver.Nameserver] = None):
         self.nameserver = nameserver
         self.resolver = dns.resolver.Resolver()
         if self.nameserver is not None:

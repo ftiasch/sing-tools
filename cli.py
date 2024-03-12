@@ -9,6 +9,7 @@ from typing import Optional
 
 import argcomplete
 import requests
+import dns.nameserver
 
 from common import setup_logging
 from lib import Parser
@@ -66,16 +67,13 @@ def ww_filter(name: str, _: dict) -> list[str]:
     return common_filter("ww", name.split("·")[1])
 
 
-def select(args, nameserver: Optional[str] = None) -> Parser:
+def select(args, nameserver: Optional[dns.nameserver.Nameserver] = None) -> Parser:
     parser = Parser(nameserver)
     if "okgg" in args.select:
         parser.parse("okgg", okgg_filter)
     if "ww" in args.select:
         parser.parse("ww", ww_filter)
     return parser
-
-
-LOCAL_DNS = "223.5.5.5"
 
 
 def gw_gen(args):
@@ -97,13 +95,13 @@ def gw_gen(args):
             "servers": [
                 {
                     "tag": "dns_proxy",
-                    "address": "tls://8.8.8.8",
+                    "address": "tls://1.1.1.1",
                     "strategy": "ipv4_only",
                     "detour": "proxy",
                 },
                 {
                     "tag": "dns_direct",
-                    "address": LOCAL_DNS,
+                    "address": "tls://1.12.12.12",
                     "strategy": "ipv4_only",
                     "detour": "direct",
                 },
@@ -205,7 +203,7 @@ def gw_gen(args):
         },
     }
 
-    parser = select(args, LOCAL_DNS)
+    parser = select(args, "223.5.5.5")
     config["outbounds"] = parser.assemble()
 
     rules = [
