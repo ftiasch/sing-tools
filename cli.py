@@ -43,6 +43,14 @@ def guess_region(name: str) -> str:
             "吉隆坡",
             "🇲🇾",
         ],
+        "TH": [
+            "曼谷",
+            "🇹🇭",
+        ],
+        "PH": [
+            "马尼拉",
+            "🇵🇭",
+        ],
     }
     for region, matchers in config.items():
         for matcher in matchers:
@@ -54,8 +62,9 @@ def guess_region(name: str) -> str:
 def common_filter(prefix: str, name: str) -> list[str]:
     region = guess_region(name)
     tags = ["auto", prefix, f"{prefix} {region}"]
-    if region in ["HK", "JP", "SG", "MY"]:
-        tags.append(f"{prefix} Asia")
+    if region in ["MY", "TH", "PH"]:
+        tags.pop()
+        tags.append(f"{prefix} 东南亚")
     return tags
 
 
