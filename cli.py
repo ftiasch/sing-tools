@@ -139,7 +139,7 @@ def gw_gen(args):
             {
                 "type": "direct",
                 "tag": "dns-in",
-                "listen": "::",
+                "listen": "127.0.0.1",
                 "listen_port": 5353,
                 "network": "udp",
                 "override_address": "1.0.0.1",
