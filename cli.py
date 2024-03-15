@@ -93,21 +93,12 @@ def gw_gen(args):
         used_geosites.add(g)
         return g
 
-    def adblock_rule():
-        return geosite("category-ads-all")
-
     prefix = Path(args.prefix)
 
     config = {
         "log": {"level": "error", "timestamp": True},
         "dns": {
             "servers": [
-                {
-                    "tag": "dns_proxy",
-                    "address": "tls://1.1.1.1",
-                    "strategy": "ipv4_only",
-                    "detour": "proxy",
-                },
                 {
                     "tag": "dns_direct",
                     "address": "tls://1.12.12.12",
@@ -130,26 +121,7 @@ def gw_gen(args):
                     "server": "dns_direct",
                 },
                 {"outbound": "any", "server": "dns_direct"},
-                {
-                    "rule_set": adblock_rule(),
-                    "server": "dns_refused",
-                    "disable_cache": True,
-                },
-                {"query_type": ["A"], "server": "dns_fakeip"},
-                {
-                    "query_type": "CNAME",
-                    "rule_set": geosite("cn"),
-                    "server": "dns_direct",
-                },
-                {
-                    "type": "logical",
-                    "mode": "and",
-                    "rules": [
-                        {"query_type": "CNAME"},
-                        {"rule_set": geosite("cn"), "invert": True},
-                    ],
-                    "server": "dns_proxy",
-                },
+                {"query_type": ["A", "CNAME"], "server": "dns_fakeip"},
                 {
                     "query_type": ["A", "CNAME"],
                     "invert": True,
@@ -222,7 +194,6 @@ def gw_gen(args):
             "type": "logical",
             "mode": "or",
             "rules": [
-                {"rule_set": adblock_rule()},
                 {"network": "tcp", "port": 853},
                 {"network": "udp", "port": 443},
                 {"protocol": "stun"},
@@ -252,7 +223,6 @@ def gw_gen(args):
         {"rule_set": "geoip-cn"},
         {
             "domain_suffix": [
-                ".arpa",
                 ".roborock.com",
                 ".steamserver.net",
                 ".syncthing.net",
