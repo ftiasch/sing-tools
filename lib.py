@@ -53,16 +53,17 @@ class Parser:
                 tcp=True,
                 raise_on_no_answer=False,
             )
-            if not answers and self.ipv6:
-                logging.info("DNS no A answers")
-                answers = self.resolver.resolve(
-                    host,
-                    rdtype=dns.rdatatype.AAAA,
-                    tcp=True,
-                    raise_on_no_answer=True,
-                )
-            else:
-                return None
+            if not answers:
+                if self.ipv6:
+                    logging.info("DNS no A answers")
+                    answers = self.resolver.resolve(
+                        host,
+                        rdtype=dns.rdatatype.AAAA,
+                        tcp=True,
+                        raise_on_no_answer=True,
+                    )
+                else:
+                    return None
             answer = answers[0].to_text()
             logging.info("DNS answer|%s" % (answer))
             return answer
