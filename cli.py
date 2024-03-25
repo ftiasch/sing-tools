@@ -61,10 +61,12 @@ def guess_region(name: str) -> str:
 
 def common_filter(prefix: str, name: str) -> list[str]:
     region = guess_region(name)
+    if region not in ("US", "HK", "JP", "SG"):
+        return []
     tags = ["auto", prefix, f"{prefix} {region}"]
-    if region in ["MY", "TH", "PH"]:
-        tags.pop()
-        tags.append(f"{prefix} 东南亚")
+    # if region in ["MY", "TH", "PH"]:
+    #     tags.pop()
+    #     tags.append(f"{prefix} 东南亚")
     return tags
 
 
@@ -243,6 +245,8 @@ def gw_gen(args):
                 "outbound": "direct",
             }
         )
+    # blindedly router github via okgg
+    rules.append({"rule_set": geosite("github"), "outbound": "okgg"})
 
     config["route"]["rules"] = rules
 
