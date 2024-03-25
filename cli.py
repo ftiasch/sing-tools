@@ -67,6 +67,8 @@ def common_filter(prefix: str, name: str) -> list[str]:
     # if region in ["MY", "TH", "PH"]:
     #     tags.pop()
     #     tags.append(f"{prefix} 东南亚")
+    if region not in ["HK"]:
+        tags.append("openai")
     return tags
 
 
@@ -245,7 +247,8 @@ def gw_gen(args):
                 "outbound": "direct",
             }
         )
-    # blindedly router github via okgg
+    # Application specified rules
+    rules.append({"rule_set": geosite("openai"), "outbound": "openai"})
     rules.append({"rule_set": geosite("github"), "outbound": "okgg"})
 
     config["route"]["rules"] = rules
