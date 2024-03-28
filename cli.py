@@ -61,7 +61,7 @@ def guess_region(name: str) -> str:
 
 def common_filter(prefix: str, name: str) -> list[str]:
     region = guess_region(name)
-    if region not in ("US", "HK", "JP", "SG"):
+    if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
         return []
     tags = ["auto", prefix, f"{prefix} {region}"]
     # if region in ["MY", "TH", "PH"]:
