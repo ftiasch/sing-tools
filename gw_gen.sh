@@ -15,7 +15,8 @@ python cli.py gw_gen $@
 
 rsync run/config.json marf-gw:/etc/sing-box
 rsync -arz /usr/share/sing-box/sing-geosite-rule-set/ marf-gw:/usr/share/sing-geosite/
-for d in yacd-meta sing-geoip; do
+rsync -arz /usr/share/sing-box/sing-geoip-rule-set/ marf-gw:/usr/share/sing-ip/
+for d in yacd-meta; do
 	rsync -arz /usr/share/$d marf-gw:/usr/share
 done
 ssh marf-gw service sing-box restart
