@@ -4,12 +4,9 @@ import json
 import logging
 import os
 from pathlib import Path
-from re import RegexFlag
-from typing import Optional
 
 import argcomplete
 import requests
-import dns.nameserver
 
 from common import setup_logging
 from lib import Parser
@@ -71,8 +68,8 @@ def okgg_filter(name: str, _: dict) -> list[str]:
 
 
 def ww_filter(name: str, _: dict) -> list[str]:
-    if '游戏' in name:
-      return []
+    if "游戏" in name:
+        return []
     return common_filter("ww", name.split("·")[1])
 
 
@@ -241,7 +238,17 @@ def gen(args):
                 "outbound": "direct",
             }
         )
+
     # Application specified rules
+    def app_rule(rs, outbound):
+        rules.append(
+            {
+                "rule_set": geosite(rs),
+                "outbound": outbound,
+            }
+        )
+
+    app_rule("github", "okgg")
 
     config["route"]["rules"] = rules
 
