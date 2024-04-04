@@ -184,9 +184,9 @@ class Parser:
                     "type": "urltest",
                     "tag": g,
                     "outbounds": tags,
-                    "interval": "1m",
-                    "tolerance": 50,
-                    "interrupt_exist_connections": False,
+                    "interval": "5m",
+                    "tolerance": 100,
+                    "interrupt_exist_connections": True,
                 },
             )
         outbounds.extend(

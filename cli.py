@@ -63,13 +63,7 @@ def common_filter(prefix: str, name: str) -> list[str]:
     region = guess_region(name)
     if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
         return []
-    tags = ["auto", prefix, f"{prefix} {region}"]
-    # if region in ["MY", "TH", "PH"]:
-    #     tags.pop()
-    #     tags.append(f"{prefix} 东南亚")
-    if region not in ["HK"]:
-        tags.append("openai")
-    return tags
+    return [prefix, f"{prefix} {region}"]
 
 
 def okgg_filter(name: str, _: dict) -> list[str]:
@@ -82,14 +76,12 @@ def ww_filter(name: str, _: dict) -> list[str]:
 
 def select(args) -> Parser:
     parser = Parser(args.nameserver, ipv6=args.ipv6)
-    if "okgg" in args.select:
-        parser.parse("okgg", okgg_filter)
-    if "ww" in args.select:
-        parser.parse("ww", ww_filter)
+    parser.parse("okgg", okgg_filter)
+    parser.parse("ww", ww_filter)
     return parser
 
 
-def gw_gen(args):
+def gen(args):
     used_geosites = set()
 
     def geosite(site):
@@ -248,8 +240,6 @@ def gw_gen(args):
             }
         )
     # Application specified rules
-    rules.append({"rule_set": geosite("openai"), "outbound": "openai"})
-    rules.append({"rule_set": geosite("github"), "outbound": "okgg"})
 
     config["route"]["rules"] = rules
 
@@ -287,10 +277,9 @@ def main():
     argcomplete.autocomplete(parser)
     parser.add_argument(
         "func",
-        choices=["gw_gen", "down"],
-        default="gw_gen",
+        choices=["gen", "down"],
+        default="gen",
     )
-    parser.add_argument("-s", "--select", type=list_str, default="okgg")
     parser.add_argument("-p", "--prefix", default="/usr/share")
     parser.add_argument("-n", "--nameserver", default="223.5.5.5")
     parser.add_argument("--ipv6", default=False, action="store_true")
