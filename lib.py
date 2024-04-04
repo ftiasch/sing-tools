@@ -1,4 +1,5 @@
 import base64
+from collections import defaultdict
 import logging
 from typing import Callable, Optional
 from urllib.parse import parse_qs, unquote, urlparse
@@ -24,12 +25,15 @@ def is_valid_ip(ip):
     return bool(ipv4_pattern.match(ip)) or bool(ipv6_pattern.match(ip))
 
 
+def auto(g: str) -> str:
+    return g + " auto"
+
+
 class Parser:
     nameserver: Optional[dns.nameserver.Nameserver]
     ipv6: bool
     resolver: dns.resolver.Resolver
-    outbounds: list[dict]
-    groups: dict[str, list[str]]
+    outbounds: list[tuple[list[str], dict]]
 
     def __init__(
         self, nameserver: Optional[dns.nameserver.Nameserver] = None, ipv6=False
@@ -72,7 +76,7 @@ class Parser:
             return None
 
     def has_tag(self, tag: str):
-        for o in self.outbounds:
+        for _, o in self.outbounds:
             if o["tag"] == tag:
                 return True
         return False
@@ -86,14 +90,10 @@ class Parser:
 
     def parse(self, group_name: str, fn: Callable[[str, dict], list[str]]):
         def try_add(fragment, outbound):
-            groups = fn(fragment, outbound)
-            if groups:
+            path = fn(fragment, outbound)
+            if path:
                 outbound["tag"] = self.get_tag(fragment)
-                self.outbounds.append(outbound)
-                for g in groups:
-                    if g not in self.groups:
-                        self.groups[g] = []
-                    self.groups[g].append(outbound["tag"])
+                self.outbounds.append((path, outbound))
             else:
                 logging.warning("filtered|%s" % (fragment))
 
@@ -164,31 +164,38 @@ class Parser:
                     )
 
     def assemble(self) -> list:
-        proxy_tags = []
-        for g in self.groups:
-            proxy_tags.append(g)
-        # for o in self.outbounds:
-        #     proxy_tags.append(o["tag"])
-        outbounds = self.outbounds.copy()
-        outbounds.append(
-            {
-                "type": "selector",
-                "tag": "proxy",
-                "outbounds": proxy_tags,
-                "interrupt_exist_connections": False,
-            },
-        )
-        for g, tags in self.groups.items():
+        groups, auto_groups, outbounds = defaultdict(set), defaultdict(set), []
+        for path, o in self.outbounds:
+            outbounds.append(o)
+            for u, v in zip(path, path[1:]):
+                groups[u].add(v)
+                auto_groups[auto(u)].add(auto(v))
+            u, tag = path[-1], o["tag"]
+            groups[u].add(tag)
+            auto_groups[auto(u)].add(tag)
+
+        for group, children in groups.items():
+            outbounds.append(
+                {
+                    "type": "selector",
+                    "tag": group,
+                    "outbounds": [auto(group), *children],
+                    "default": auto(group),
+                    "interrupt_exist_connections": False,
+                },
+            )
+        for group, children in auto_groups.items():
             outbounds.append(
                 {
                     "type": "urltest",
-                    "tag": g,
-                    "outbounds": tags,
+                    "tag": group,
+                    "outbounds": list(children),
                     "interval": "5m",
                     "tolerance": 100,
                     "interrupt_exist_connections": True,
                 },
             )
+
         outbounds.extend(
             [
                 {"type": "direct", "tag": "direct"},
