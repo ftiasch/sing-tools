@@ -63,7 +63,7 @@ def common_filter(prefix: str, name: str) -> list[str]:
     region = guess_region(name)
     if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
         return []
-    return [prefix, f"{prefix} {region}"]
+    return ["auto", prefix, f"{prefix} {region}"]
 
 
 def okgg_filter(name: str, _: dict) -> list[str]:

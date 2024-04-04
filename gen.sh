@@ -10,7 +10,7 @@ if [[ "$1" == "down" ]]; then
 	python cli.py down
 fi
 
-python cli.py gw_gen $@
+python cli.py gen $@
 # sing-box check -c run/config.json
 
 rsync run/config.json marf-gw:/etc/sing-box
