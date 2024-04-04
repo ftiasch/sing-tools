@@ -71,6 +71,8 @@ def okgg_filter(name: str, _: dict) -> list[str]:
 
 
 def ww_filter(name: str, _: dict) -> list[str]:
+    if '游戏' in name:
+      return []
     return common_filter("ww", name.split("·")[1])
 
 
