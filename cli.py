@@ -60,7 +60,10 @@ def common_filter(prefix: str, name: str) -> list[str]:
     region = guess_region(name)
     if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
         return []
-    return ["auto", prefix, f"{prefix} {region}"]
+    tags = ["auto", prefix, f"{prefix} {region}"]
+    if region in ("US", "JP", "SG", "TW"):
+        tags.append("openai")
+    return tags
 
 
 def okgg_filter(name: str, _: dict) -> list[str]:
@@ -248,7 +251,8 @@ def gen(args):
             }
         )
 
-    app_rule("github", "okgg")
+    # app_rule("github", "okgg")
+    app_rule("openai", "openai")
 
     config["route"]["rules"] = rules
 
