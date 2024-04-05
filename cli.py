@@ -56,21 +56,21 @@ def guess_region(name: str) -> str:
     return "N/A"
 
 
-def common_filter(prefix: str, name: str) -> list[str]:
+def common_filter(prefix: str, name: str) -> list[list[str]]:
     region = guess_region(name)
     if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
         return []
-    tags = ["proxy", prefix, f"{prefix} {region}"]
-    # if region in ("US", "JP", "SG", "TW"):
-    #     tags.append("openai")
+    tags = [["proxy", prefix]]
+    if region in ("US", "JP", "SG", "TW"):
+        tags.append(["openai"])
     return tags
 
 
-def okgg_filter(name: str, _: dict) -> list[str]:
+def okgg_filter(name: str, _: dict):
     return common_filter("okgg", name)
 
 
-def ww_filter(name: str, _: dict) -> list[str]:
+def ww_filter(name: str, _: dict):
     if "游戏" in name:
         return []
     return common_filter("ww", name.split("·")[1])
@@ -252,7 +252,7 @@ def gen(args):
         )
 
     # app_rule("github", "okgg")
-    # app_rule("openai", "openai")
+    app_rule("openai", "openai")
 
     config["route"]["rules"] = rules
 

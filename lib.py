@@ -33,7 +33,7 @@ class Parser:
     nameserver: Optional[dns.nameserver.Nameserver]
     ipv6: bool
     resolver: dns.resolver.Resolver
-    outbounds: list[tuple[list[str], dict]]
+    outbounds: list[tuple[list[list[str]], dict]]
 
     def __init__(
         self, nameserver: Optional[dns.nameserver.Nameserver] = None, ipv6=False
@@ -88,12 +88,12 @@ class Parser:
             tag = otag + f" #{count}"
         return tag
 
-    def parse(self, group_name: str, fn: Callable[[str, dict], list[str]]):
+    def parse(self, group_name: str, fn: Callable[[str, dict], list[list[str]]]):
         def try_add(fragment, outbound):
-            path = fn(fragment, outbound)
-            if path:
+            paths = fn(fragment, outbound)
+            if paths:
                 outbound["tag"] = self.get_tag(fragment)
-                self.outbounds.append((path, outbound))
+                self.outbounds.append((paths, outbound))
             else:
                 logging.warning("filtered|%s" % (fragment))
 
@@ -165,14 +165,15 @@ class Parser:
 
     def assemble(self) -> list:
         groups, auto_groups, outbounds = defaultdict(set), defaultdict(set), []
-        for path, o in self.outbounds:
+        for paths, o in self.outbounds:
             outbounds.append(o)
-            for u, v in zip(path, path[1:]):
-                groups[u].add(v)
-                auto_groups[auto(u)].add(auto(v))
-            u, tag = path[-1], o["tag"]
-            groups[u].add(tag)
-            auto_groups[auto(u)].add(tag)
+            for path in paths:
+                for u, v in zip(path, path[1:]):
+                    groups[u].add(v)
+                    auto_groups[auto(u)].add(auto(v))
+                u, tag = path[-1], o["tag"]
+                groups[u].add(tag)
+                auto_groups[auto(u)].add(tag)
 
         for group, children in groups.items():
             outbounds.append(
