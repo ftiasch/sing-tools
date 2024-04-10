@@ -33,7 +33,7 @@ def guess_region(name: str) -> str:
         "US": ["US", "美国"],
         "HK": ["HongKong", "HK", "港", "🇭🇰"],
         "JP": ["Osaka", "JP", "日", "🇯🇵"],
-        "SG": ["新加坡"],
+        "SG": ["Singapore", "新加坡"],
         "TW": ["TW"],
         "KR": ["KR"],
         "MY": [
@@ -219,8 +219,10 @@ def gen(args):
     direct_rules = [
         {"ip_is_private": True},
         {"rule_set": "geoip-cn"},
+        {"domain": ["mycard.moe"]},
         {
             "domain_suffix": [
+                ".moecube.com",
                 ".roborock.com",
                 ".steamserver.net",
                 ".syncthing.net",
@@ -251,7 +253,7 @@ def gen(args):
             }
         )
 
-    # app_rule("github", "okgg")
+    app_rule("github", "okgg")
     app_rule("openai", "openai")
 
     config["route"]["rules"] = rules
