@@ -263,7 +263,7 @@ def gen(args):
             "type": "local",
             "tag": "geoip-cn",
             "format": "binary",
-            "path": str(prefix / "sing-geoip" / "rule-set" / "geoip-cn.srs"),
+            "path": str(prefix / "sing-geoip" / "geoip-cn.srs"),
         }
     ]
     for g in used_geosites:
@@ -272,7 +272,7 @@ def gen(args):
                 "type": "local",
                 "tag": g,
                 "format": "binary",
-                "path": str(prefix / "sing-geosite" / "rule-set" / f"{g}.srs"),
+                "path": str(prefix / "sing-geosite" / f"{g}.srs"),
             }
         )
 
