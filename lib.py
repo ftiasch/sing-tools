@@ -30,13 +30,13 @@ def auto(g: str) -> str:
 
 
 class Parser:
-    nameserver: Optional[dns.nameserver.Nameserver]
+    nameserver: Optional[str | dns.nameserver.Nameserver]
     ipv6: bool
     resolver: dns.resolver.Resolver
     outbounds: list[tuple[list[list[str]], dict]]
 
     def __init__(
-        self, nameserver: Optional[dns.nameserver.Nameserver] = None, ipv6=False
+        self, nameserver: Optional[str | dns.nameserver.Nameserver] = None, ipv6=False
     ):
         self.nameserver = nameserver
         self.ipv6 = ipv6
@@ -50,7 +50,7 @@ class Parser:
         if self.nameserver is None or is_valid_ip(host):
             return host
         try:
-            logging.info("DNS query|%s" % (host))
+            logging.info("DNS query|%s", host)
             answers = self.resolver.resolve(
                 host,
                 rdtype=dns.rdatatype.A,
@@ -68,8 +68,8 @@ class Parser:
                     )
                 else:
                     return None
-            answer = answers[0].to_text()
-            logging.info("DNS answer|%s" % (answer))
+            answer = answers[0].to_text()  # type: ignore
+            logging.info("DNS answer|%s", answer)
             return answer
         except dns.exception.DNSException:
             logging.exception("DNS error")
@@ -88,14 +88,14 @@ class Parser:
             tag = otag + f" #{count}"
         return tag
 
-    def parse(self, group_name: str, fn: Callable[[str, dict], list[list[str]]]):
+    def parse(self, group_name: str, fn: Callable[[str], list[list[str]]]):
         def try_add(fragment, outbound):
-            paths = fn(fragment, outbound)
+            paths = fn(fragment)
             if paths:
                 outbound["tag"] = self.get_tag(fragment)
                 self.outbounds.append((paths, outbound))
             else:
-                logging.warning("filtered|%s" % (fragment))
+                logging.warning("filtered|%s", fragment)
 
         with open(f"run/{group_name}.txt") as f:
             share_links = b64decode(f.read()).decode("utf-8").splitlines()
@@ -137,9 +137,7 @@ class Parser:
                                 },
                             )
                     else:
-                        logging.warning(
-                            "unknown vless|%s|%s" % (query_params, fragment)
-                        )
+                        logging.warning("unknown vless|%s|%s", query_params, fragment)
                 case "trojan":
                     uuid, hostname_part = parsed_url.netloc.split("@", 1)
                     server, server_port = hostname_part.split(":", 1)
@@ -160,10 +158,10 @@ class Parser:
                     )
                 case _:
                     logging.warning(
-                        "unknown proto|scheme=%s|%s" % (parsed_url.scheme, fragment)
+                        "unknown proto|scheme=%s|%s", parsed_url.scheme, fragment
                     )
 
-    def assemble(self) -> list:
+    def get_outbounds(self) -> list[dict]:
         groups, auto_groups, outbounds = defaultdict(set), defaultdict(set), []
         for paths, o in self.outbounds:
             outbounds.append(o)
@@ -199,8 +197,8 @@ class Parser:
 
         outbounds.extend(
             [
-                {"type": "direct", "tag": "direct"},
-                {"type": "block", "tag": "block"},
+                {"type": "direct", "tag": "direct-out"},
+                {"type": "block", "tag": "reject-out"},
                 {"type": "dns", "tag": "dns-out"},
             ]
         )
