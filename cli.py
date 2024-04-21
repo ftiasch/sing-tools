@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import os
-from typing import Annotated, Self
+from typing import Annotated, Self, TypeAlias
 
 import typer
 
@@ -35,25 +35,14 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
     return providers
 
 
-# "domain_suffix": [
-#    ".archlinux.org",
-#    ".bopufund.com",
-#    "ftiasch.xyz",
-#    ".limao.tech",
-#    ".ntp.org",
-# ],
 class Gen:
-    nameserver: str
     providers: list[BaseProvider]
     rule_sets: set[str]
     config: dict
 
-    def __init__(self: Self, nameserver: str, providers: list[BaseProvider]) -> None:
-        self.nameserver = nameserver
+    def __init__(self: Self, providers: list[BaseProvider]) -> None:
         self.providers = providers
-
         self.rule_sets = set()
-        self.config = {}
         self.config = {
             "log": {"level": "error", "timestamp": True},
             "dns": {
@@ -72,7 +61,6 @@ class Gen:
                     },
                 ],
                 "rules": [
-                    {"server": "fakeip-dns", "clash_mode": "Global"},
                     {"server": "aliyun-doh", "clash_mode": "Direct"},
                     {"server": "reject-dns", "rule_set": self.__rule_set(["reject"])},
                     {
@@ -94,7 +82,6 @@ class Gen:
                         ),
                     },
                 ],
-                "independent_cache": True,
                 "final": "cloudflare-doh",
             },
             "route": {
@@ -103,23 +90,20 @@ class Gen:
                     {"outbound": "direct-out", "ip_is_private": True},
                     {
                         "outbound": "dns-out",
-                        "type": "logical",
-                        "mode": "or",
-                        "rules": [
-                            {"port": 5353},
-                            # {"protocol": "dns"},
-                            {"inbound": ["dns-in"]},
-                        ],
+                        "inbound": "dns-in",
                     },
                     {
                         "outbound": "reject-out",
                         "type": "logical",
                         "mode": "or",
-                        "rules": [{"port": 853}, {"protocol": "stun"}],
+                        "rules": [
+                            {"network": "tcp", "port": 853},
+                            {"network": "udp", "port": 443},
+                            {"protocol": "stun"},
+                        ],
                     },
-                    {"outbound": "PROXY", "clash_mode": "Global"},
-                    {"outbound": "direct-out", "clash_mode": "Direct"},
-                    {"outbound": "reject-out", "rule_set": ["reject"]},
+                    {"outbound": "reject-out", "rule_set": self.__rule_set(["reject"])},
+                    {"outbound": "PROXY", "ip_cidr": ["13.115.121.128"]},
                     {
                         "outbound": "direct-out",
                         "type": "logical",
@@ -146,9 +130,16 @@ class Gen:
                             },
                         ],
                     },
+                    {
+                        "outbound": "direct-out",
+                        "domain_suffix": [
+                            ".roborock.com",
+                            ".steamserver.net",
+                        ],
+                    },
                 ],
-                "auto_detect_interface": True,
                 "final": "PROXY",
+                "auto_detect_interface": True,
             },
             "inbounds": [
                 {
@@ -184,11 +175,10 @@ class Gen:
                 "cache_file": {
                     "enabled": True,
                     "path": "cache.db",
-                    "store_fakeip": True,
                 },
                 "clash_api": {
                     "external_controller": "0.0.0.0:9090",
-                    "external_ui_download_detour": "PROXY",
+                    "external_ui_download_detour": "direct-out",
                 },
             },
         }
@@ -196,13 +186,19 @@ class Gen:
         self.config["route"]["rule_set"] = self.__get_rule_set()
 
     def __get_outbounds(self: Self) -> list[dict]:
-        return []
+        with open("run/outbounds.json") as f:
+            outbounds: list[dict] = json.load(f)
+        return [
+            {"type": "direct", "tag": "direct-out"},
+            {"type": "block", "tag": "reject-out"},
+            {"type": "dns", "tag": "dns-out"},
+        ] + outbounds
 
     @staticmethod
     def get_rule_set_url(r: str) -> str:
-        if r == "geoip-cn":
-            return "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs"
-        return "https://raw.githubusercontent.com/chg1f/sing-geosite-mixed/rule-set/{r}.srs"
+        if r.startswith("geoip"):
+            return f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
+        return f"https://raw.githubusercontent.com/chg1f/sing-geosite-mixed/rule-set/{r}.srs"
 
     def __get_rule_set(self: Self) -> list[dict]:
         result = []
@@ -211,7 +207,7 @@ class Gen:
                 {
                     "tag": r,
                     "type": "remote",
-                    "download_detour": "PROXY",
+                    "download_detour": "direct-out",
                     "update_interval": "1d",
                     "format": "binary",
                     "url": self.get_rule_set_url(r),
@@ -230,6 +226,8 @@ DEFAULT_PROVIDERS = ["okgg", "ww"]
 
 app = typer.Typer(pretty_exceptions_enable=False)
 
+ProviderOption: TypeAlias = Annotated[list[str], typer.Option("--provider", "-p")]
+
 
 def setup() -> None:
     os.chdir(os.path.dirname(__file__) or ".")
@@ -242,9 +240,7 @@ def down(
     *,
     nameserver: str = DEFAULT_NAMESERVER,
     ipv6: bool = False,
-    provider_names: Annotated[
-        list[str], typer.Option("--provider", "-p")
-    ] = DEFAULT_PROVIDERS,
+    provider_names: ProviderOption = DEFAULT_PROVIDERS,
 ):
     setup()
 
@@ -261,27 +257,17 @@ def down(
         json.dump(parser.get_outbounds(), f, ensure_ascii=False, indent=4)
 
 
-# @app.command()
-# def gen(
-#     *,
-#     download: bool = False,
-#     nameserver: str = DEFAULT_NAMESERVER,
-#     provider: Annotated[list[str], typer.Option()] = DEFAULT_PROVIDERS,
-# ):
-#     os.chdir(os.path.dirname(__file__) or ".")
-#     setup_logging()
-#
-#     gen = Gen(
-#         nameserver=nameserver, providers=[p for p in PROVIDERS if p.name in provider]
-#     )
-#
-#     if download:
-#         gen.download()
-#
-#     gen.gen()
-#
-#     with open("run/config.json", "w") as f:
-#         json.dump(gen.config, f, ensure_ascii=False, indent=4)
+@app.command()
+def gen(
+    *,
+    provider_names: ProviderOption = DEFAULT_PROVIDERS,
+):
+    setup()
+
+    gen = Gen(providers=get_providers(provider_names))
+
+    with open("run/config.json", "w") as f:
+        json.dump(gen.config, f, ensure_ascii=False, indent=4)
 
 
 if __name__ == "__main__":

@@ -255,11 +255,4 @@ class Parser:
                 },
             )
 
-        # outbounds.extend(
-        #     [
-        #         {"type": "direct", "tag": "direct-out"},
-        #         {"type": "block", "tag": "reject-out"},
-        #         {"type": "dns", "tag": "dns-out"},
-        #     ]
-        # )
         return outbounds
