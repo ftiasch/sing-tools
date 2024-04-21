@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import os
-from typing import Annotated, Self, TypeAlias
+from typing import IO, Annotated, Any, Self, TextIO, TypeAlias
 
 import typer
 
@@ -226,48 +226,40 @@ DEFAULT_PROVIDERS = ["okgg", "ww"]
 
 app = typer.Typer(pretty_exceptions_enable=False)
 
-ProviderOption: TypeAlias = Annotated[list[str], typer.Option("--provider", "-p")]
+
+def dump(obj: Any, f: IO):
+    json.dump(obj, f, ensure_ascii=False, indent=4)
 
 
-def setup() -> None:
+@app.command()
+def main(
+    *,
+    download: bool = False,
+    nameserver: str = DEFAULT_NAMESERVER,
+    ipv6: bool = False,
+    provider_names: Annotated[
+        list[str], typer.Option("--provider", "-p")
+    ] = DEFAULT_PROVIDERS,
+):
     os.chdir(os.path.dirname(__file__) or ".")
     setup_logging()
     os.makedirs("run", exist_ok=True)
 
-
-@app.command()
-def down(
-    *,
-    nameserver: str = DEFAULT_NAMESERVER,
-    ipv6: bool = False,
-    provider_names: ProviderOption = DEFAULT_PROVIDERS,
-):
-    setup()
-
     providers = get_providers(provider_names)
 
-    # for p in providers:
-    #     p.download()
+    if download:
+        for p in providers:
+            p.download()
 
     parser = Parser(nameserver=nameserver, ipv6=ipv6)
     for p in providers:
         parser.parse(p)
-
     with open("run/outbounds.json", "w") as f:
-        json.dump(parser.get_outbounds(), f, ensure_ascii=False, indent=4)
+        dump(parser.get_outbounds(), f)
 
-
-@app.command()
-def gen(
-    *,
-    provider_names: ProviderOption = DEFAULT_PROVIDERS,
-):
-    setup()
-
-    gen = Gen(providers=get_providers(provider_names))
-
+    gen = Gen(providers)
     with open("run/config.json", "w") as f:
-        json.dump(gen.config, f, ensure_ascii=False, indent=4)
+        dump(gen.config, f)
 
 
 if __name__ == "__main__":
