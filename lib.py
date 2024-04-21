@@ -68,11 +68,11 @@ class BaseProvider:
                     return region
         return "N/A"
 
-    def filter(self, name: str) -> FilterResult:
+    def filter(self, proxy_tag: str, name: str) -> FilterResult:
         region = BaseProvider.guess_region(name)
         if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
             return []
-        tags = [["PROXY", self.name]]
+        tags = [[proxy_tag, self.name]]
         if region in ("US", "JP", "SG", "TW"):
             tags.append(["openai"])
         return tags
@@ -92,14 +92,20 @@ class BaseProvider:
 class Parser:
     nameserver: Optional[str | dns.nameserver.Nameserver]
     ipv6: bool
+    proxy_tag: str
     resolver: dns.resolver.Resolver
     outbounds: list[tuple[list[list[str]], dict]]
 
     def __init__(
-        self, nameserver: Optional[str | dns.nameserver.Nameserver] = None, ipv6=False
+        self,
+        *,
+        nameserver: Optional[str | dns.nameserver.Nameserver] = None,
+        ipv6=False,
+        proxy_tag: str,
     ):
         self.nameserver = nameserver
         self.ipv6 = ipv6
+        self.proxy_tag = proxy_tag
         self.resolver = dns.resolver.Resolver()
         if self.nameserver is not None:
             self.resolver.nameservers = [self.nameserver]
@@ -150,7 +156,7 @@ class Parser:
 
     def parse(self, provider: BaseProvider):
         def try_add(fragment, outbound):
-            paths = provider.filter(fragment)
+            paths = provider.filter(self.proxy_tag, fragment)
             if paths:
                 outbound["tag"] = self.__get_tag(fragment)
                 self.outbounds.append((paths, outbound))

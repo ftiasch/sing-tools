@@ -18,10 +18,10 @@ class WwProvider(BaseProvider):
     def __init__(self):
         super().__init__("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
-    def filter(self, name: str) -> FilterResult:
+    def filter(self, proxy_tag: str, name: str) -> FilterResult:
         if "游戏" in name:
             return []
-        return super().filter(name.split("·")[1])
+        return super().filter(proxy_tag, name.split("·")[1])
 
 
 def get_providers(names: list[str]) -> list[BaseProvider]:
@@ -33,6 +33,9 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
             case "ww":
                 providers.append(WwProvider())
     return providers
+
+
+PROXY_TAG = "PROXY"
 
 
 class Gen:
@@ -47,24 +50,22 @@ class Gen:
         def rule_set(names: list[str]) -> list[str]:
             return self.__rule_set(names)
 
-        def domestic_rules(strategy: dict) -> list:
-            return [
-                {
-                    "domain_suffix": [
-                        "bopufund.com",
-                        "ftiasch.xyz",
-                        "limao.tech",
-                        ".syncthing.net",
-                    ],
-                    **strategy,
-                },
-                {
-                    "rule_set": rule_set(
-                        ["geosite-cn", "geosite-apple", "geosite-icloud"]
-                    ),
-                    **strategy,
-                },
-            ]
+        def route(outbound: str, **kwargs) -> dict:
+            return {
+                **kwargs,
+                "outbound": outbound,
+            }
+
+        def route_direct(**kwargs) -> dict:
+            return route("direct-out", **kwargs)
+
+        use_ip = {
+            "domain": ["sz.bopufund.com" "ftiasch.xyz", "limao.tech"],
+            "domain_suffix": [
+                ".ftiasch.xyz",
+                ".limao.tech",
+            ],
+        }
 
         self.config = {
             "log": {"level": "error", "timestamp": True},
@@ -80,8 +81,9 @@ class Gen:
                     },
                 ],
                 "rules": [
-                    *domestic_rules({"server": "domestic-dns"}),
-                    {"query_type": ["A", "CNAME"], "server": "fakeip-dns"},
+                    {"outbound": "any", "server": "domestic-dns"},
+                    {**use_ip, "server": "domestic-dns"},
+                    {"query_type": ["A"], "server": "fakeip-dns"},
                 ],
                 "final": "reject-dns",
                 "fakeip": {
@@ -93,17 +95,35 @@ class Gen:
             "route": {
                 "rule_set": None,
                 "rules": [
-                    {
-                        "outbound": "dns-out",
-                        "inbound": "dns-in",
-                    },
-                    {"outbound": "direct-out", "inbound": "http-direct-in"},
-                    {
-                        "outbound": "direct-out",
-                        "rule_set": rule_set(["lancidr", "geoip-cn"]),
-                    },
-                    *domestic_rules({"outbound": "direct-out"}),
-                    {"outbound": "PROXY", "ip_cidr": ["13.115.121.128"]},
+                    route("dns-out", inbound="dns-in"),
+                    route_direct(inbound="http-direct-in"),
+                    route(PROXY_TAG, ip_cidr=["13.115.121.128"]),
+                    route_direct(ip_is_private=True),
+                    route_direct(
+                        rule_set=rule_set(
+                            [
+                                "geoip-cn",
+                                "geosite-cn",
+                                "geosite-apple",
+                                "geosite-icloud",
+                            ]
+                        )
+                    ),
+                    route_direct(
+                        domain=[
+                            "linksyssmartwifi.com",
+                            # misa's
+                            "jihuanshe.com",
+                            "ygobbs.com",
+                        ],
+                        domain_suffix=[
+                            ".linksyssmartwifi.com",
+                            ".syncthing.net",
+                            # misa's
+                            ".jihuanshe.com",
+                            ".ygobbs.com",
+                        ],
+                    ),
                 ],
                 "final": "PROXY",
                 "auto_detect_interface": True,
@@ -221,7 +241,7 @@ def main(
         for p in providers:
             p.download()
 
-    parser = Parser(nameserver=nameserver, ipv6=ipv6)
+    parser = Parser(nameserver=nameserver, ipv6=ipv6, proxy_tag=PROXY_TAG)
     for p in providers:
         parser.parse(p)
     with open("run/outbounds.json", "w") as f:
