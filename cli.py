@@ -1,88 +1,38 @@
 #!/usr/bin/env python
-import logging
-import os
-from typing import Annotated, Callable, NamedTuple, Self
 import json
+import os
+from typing import Annotated, Self
 
-import requests
 import typer
 
 from common import setup_logging
-from lib import Parser
+from lib import BaseProvider, FilterResult, Parser
 
 
-class Provider(NamedTuple):
-    name: str
-    filter: Callable[[str], list[list[str]]]
-    url: str
-
-    def download(self: Self) -> None:
-        logging.info("Downloading %s from %s", self.name, self.url)
-        try:
-            content = requests.get(self.url).text
-        except Exception:
-            logging.exception("")
-            return
-        with open(f"run/{self.name}.txt", "w") as f:
-            f.write(content)
+class OkggProvider(BaseProvider):
+    def __init__(self):
+        super().__init__("okgg", "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2")
 
 
-DEFAULT_NAMESERVER = "223.5.5.5"
-DEFAULT_PROVIDERS = ["okgg", "ww"]
+class WwProvider(BaseProvider):
+    def __init__(self):
+        super().__init__("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
+
+    def filter(self, name: str) -> FilterResult:
+        if "游戏" in name:
+            return []
+        return super().filter(name.split("·")[1])
 
 
-def guess_region(name: str) -> str:
-    config = {
-        "US": ["US", "美国"],
-        "HK": ["HongKong", "HK", "港", "🇭🇰"],
-        "JP": ["Osaka", "JP", "日", "🇯🇵"],
-        "SG": ["Singapore", "新加坡"],
-        "TW": ["TW"],
-        "KR": ["KR"],
-        "MY": [
-            "吉隆坡",
-            "🇲🇾",
-        ],
-        "TH": [
-            "曼谷",
-            "🇹🇭",
-        ],
-        "PH": [
-            "马尼拉",
-            "🇵🇭",
-        ],
-    }
-    for region, matchers in config.items():
-        for matcher in matchers:
-            if matcher in name:
-                return region
-    return "N/A"
-
-
-def common_filter(prefix: str, name: str) -> list[list[str]]:
-    region = guess_region(name)
-    if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
-        return []
-    tags = [["PROXY", prefix]]
-    if region in ("US", "JP", "SG", "TW"):
-        tags.append(["openai"])
-    return tags
-
-
-def okgg_filter(name: str) -> list[list[str]]:
-    return common_filter("okgg", name)
-
-
-def ww_filter(name: str) -> list[list[str]]:
-    if "游戏" in name:
-        return []
-    return common_filter("ww", name.split("·")[1])
-
-
-PROVIDERS: list[Provider] = [
-    Provider("okgg", okgg_filter, "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2"),
-    Provider("ww", ww_filter, "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN"),
-]
+def get_providers(names: list[str]) -> list[BaseProvider]:
+    providers = []
+    for name in names:
+        match name:
+            case "okgg":
+                providers.append(OkggProvider())
+            case "ww":
+                providers.append(WwProvider())
+    return providers
 
 
 # "domain_suffix": [
@@ -94,23 +44,16 @@ PROVIDERS: list[Provider] = [
 # ],
 class Gen:
     nameserver: str
-    providers: list[Provider]
+    providers: list[BaseProvider]
     rule_sets: set[str]
     config: dict
 
-    def __init__(self: Self, nameserver: str, providers: list[Provider]) -> None:
+    def __init__(self: Self, nameserver: str, providers: list[BaseProvider]) -> None:
         self.nameserver = nameserver
         self.providers = providers
 
         self.rule_sets = set()
         self.config = {}
-        os.makedirs("run", exist_ok=True)
-
-    def download(self: Self) -> None:
-        for p in self.providers:
-            p.download()
-
-    def gen(self: Self) -> None:
         self.config = {
             "log": {"level": "error", "timestamp": True},
             "dns": {
@@ -253,10 +196,7 @@ class Gen:
         self.config["route"]["rule_set"] = self.__get_rule_set()
 
     def __get_outbounds(self: Self) -> list[dict]:
-        parser = Parser(self.nameserver)
-        for p in self.providers:
-            parser.parse(p.name, p.filter)
-        return parser.get_outbounds()
+        return []
 
     @staticmethod
     def get_rule_set_url(r: str) -> str:
@@ -285,30 +225,63 @@ class Gen:
         return names
 
 
+DEFAULT_NAMESERVER = "223.5.5.5"
+DEFAULT_PROVIDERS = ["okgg", "ww"]
+
 app = typer.Typer(pretty_exceptions_enable=False)
 
 
-@app.command()
-def main(
-    *,
-    download: bool = False,
-    nameserver: str = DEFAULT_NAMESERVER,
-    provider: Annotated[list[str], typer.Option()] = DEFAULT_PROVIDERS,
-):
+def setup() -> None:
     os.chdir(os.path.dirname(__file__) or ".")
     setup_logging()
+    os.makedirs("run", exist_ok=True)
 
-    gen = Gen(
-        nameserver=nameserver, providers=[p for p in PROVIDERS if p.name in provider]
-    )
 
-    if download:
-        gen.download()
+@app.command()
+def down(
+    *,
+    nameserver: str = DEFAULT_NAMESERVER,
+    ipv6: bool = False,
+    provider_names: Annotated[
+        list[str], typer.Option("--provider", "-p")
+    ] = DEFAULT_PROVIDERS,
+):
+    setup()
 
-    gen.gen()
+    providers = get_providers(provider_names)
 
-    with open("run/config.json", "w") as f:
-        json.dump(gen.config, f, ensure_ascii=False, indent=4)
+    # for p in providers:
+    #     p.download()
+
+    parser = Parser(nameserver=nameserver, ipv6=ipv6)
+    for p in providers:
+        parser.parse(p)
+
+    with open("run/outbounds.json", "w") as f:
+        json.dump(parser.get_outbounds(), f, ensure_ascii=False, indent=4)
+
+
+# @app.command()
+# def gen(
+#     *,
+#     download: bool = False,
+#     nameserver: str = DEFAULT_NAMESERVER,
+#     provider: Annotated[list[str], typer.Option()] = DEFAULT_PROVIDERS,
+# ):
+#     os.chdir(os.path.dirname(__file__) or ".")
+#     setup_logging()
+#
+#     gen = Gen(
+#         nameserver=nameserver, providers=[p for p in PROVIDERS if p.name in provider]
+#     )
+#
+#     if download:
+#         gen.download()
+#
+#     gen.gen()
+#
+#     with open("run/config.json", "w") as f:
+#         json.dump(gen.config, f, ensure_ascii=False, indent=4)
 
 
 if __name__ == "__main__":

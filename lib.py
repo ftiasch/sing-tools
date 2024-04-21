@@ -1,23 +1,24 @@
 import base64
-from collections import defaultdict
 import logging
-from typing import Callable, Optional
-from urllib.parse import parse_qs, unquote, urlparse
 import re
+from collections import defaultdict
+from typing import Optional, Type, TypeAlias
+from urllib.parse import parse_qs, unquote, urlparse
 
 import dns.exception
+import dns.nameserver
 import dns.rdatatype
 import dns.resolver
-import dns.nameserver
+import requests
 
 
-def b64decode(b: str) -> bytes:
+def _b64decode(b: str) -> bytes:
     while len(b) % 4 != 0:
         b += "="
     return base64.urlsafe_b64decode(b)
 
 
-def is_valid_ip(ip):
+def _is_valid_ip(ip):
     ipv4_pattern = re.compile(
         r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
     )
@@ -25,8 +26,67 @@ def is_valid_ip(ip):
     return bool(ipv4_pattern.match(ip)) or bool(ipv6_pattern.match(ip))
 
 
-def auto(g: str) -> str:
+def _auto(g: str) -> str:
     return g + " auto"
+
+
+FilterResult: TypeAlias = list[list[str]]
+
+
+class BaseProvider:
+    name: str
+    url: str
+
+    def __init__(self, name: str, url: str):
+        self.name, self.url = name, url
+
+    @staticmethod
+    def guess_region(name: str) -> str:
+        config = {
+            "US": ["US", "美国"],
+            "HK": ["HongKong", "HK", "港", "🇭🇰"],
+            "JP": ["Osaka", "JP", "日", "🇯🇵"],
+            "SG": ["Singapore", "新加坡"],
+            "TW": ["TW"],
+            "KR": ["KR"],
+            "MY": [
+                "吉隆坡",
+                "🇲🇾",
+            ],
+            "TH": [
+                "曼谷",
+                "🇹🇭",
+            ],
+            "PH": [
+                "马尼拉",
+                "🇵🇭",
+            ],
+        }
+        for region, matchers in config.items():
+            for matcher in matchers:
+                if matcher in name:
+                    return region
+        return "N/A"
+
+    def filter(self, name: str) -> FilterResult:
+        region = BaseProvider.guess_region(name)
+        if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
+            return []
+        tags = [["PROXY", self.name]]
+        if region in ("US", "JP", "SG", "TW"):
+            tags.append(["openai"])
+        return tags
+
+    def download(self) -> None:
+        name, url = self.name, self.url
+        logging.info("Downloading %s from %s", name, url)
+        try:
+            content = requests.get(url).text
+        except Exception:
+            logging.exception("")
+            return
+        with open(f"run/{name}.txt", "w") as f:
+            f.write(content)
 
 
 class Parser:
@@ -46,8 +106,8 @@ class Parser:
         self.outbounds = []
         self.groups = {}
 
-    def resolve(self, host: str) -> Optional[str]:
-        if self.nameserver is None or is_valid_ip(host):
+    def __resolve(self, host: str) -> Optional[str]:
+        if self.nameserver is None or _is_valid_ip(host):
             return host
         try:
             logging.info("DNS query|%s", host)
@@ -75,30 +135,30 @@ class Parser:
             logging.exception("DNS error")
             return None
 
-    def has_tag(self, tag: str):
+    def __has_tag(self, tag: str):
         for _, o in self.outbounds:
             if o["tag"] == tag:
                 return True
         return False
 
-    def get_tag(self, otag: str) -> str:
+    def __get_tag(self, otag: str) -> str:
         count, tag = 0, otag
-        while self.has_tag(tag):
+        while self.__has_tag(tag):
             count += 1
             tag = otag + f" #{count}"
         return tag
 
-    def parse(self, group_name: str, fn: Callable[[str], list[list[str]]]):
+    def parse(self, provider: BaseProvider):
         def try_add(fragment, outbound):
-            paths = fn(fragment)
+            paths = provider.filter(fragment)
             if paths:
-                outbound["tag"] = self.get_tag(fragment)
+                outbound["tag"] = self.__get_tag(fragment)
                 self.outbounds.append((paths, outbound))
             else:
                 logging.warning("filtered|%s", fragment)
 
-        with open(f"run/{group_name}.txt") as f:
-            share_links = b64decode(f.read()).decode("utf-8").splitlines()
+        with open(f"run/{provider.name}.txt") as f:
+            share_links = _b64decode(f.read()).decode("utf-8").splitlines()
         for share_link in share_links:
             try:
                 parsed_url = urlparse(share_link)
@@ -117,7 +177,7 @@ class Parser:
                     ):
                         uuid, hostname_part = parsed_url.netloc.split("@", 1)
                         server, server_port = hostname_part.split(":", 1)
-                        server = self.resolve(server)
+                        server = self.__resolve(server)
                         if server:
                             try_add(
                                 fragment,
@@ -168,18 +228,18 @@ class Parser:
             for path in paths:
                 for u, v in zip(path, path[1:]):
                     groups[u].add(v)
-                    auto_groups[auto(u)].add(auto(v))
+                    auto_groups[_auto(u)].add(_auto(v))
                 u, tag = path[-1], o["tag"]
                 groups[u].add(tag)
-                auto_groups[auto(u)].add(tag)
+                auto_groups[_auto(u)].add(tag)
 
         for group, children in groups.items():
             outbounds.append(
                 {
                     "type": "selector",
                     "tag": group,
-                    "outbounds": [auto(group), *children],
-                    "default": auto(group),
+                    "outbounds": [_auto(group), *children],
+                    "default": _auto(group),
                     "interrupt_exist_connections": False,
                 },
             )
@@ -195,11 +255,11 @@ class Parser:
                 },
             )
 
-        outbounds.extend(
-            [
-                {"type": "direct", "tag": "direct-out"},
-                {"type": "block", "tag": "reject-out"},
-                {"type": "dns", "tag": "dns-out"},
-            ]
-        )
+        # outbounds.extend(
+        #     [
+        #         {"type": "direct", "tag": "direct-out"},
+        #         {"type": "block", "tag": "reject-out"},
+        #         {"type": "dns", "tag": "dns-out"},
+        #     ]
+        # )
         return outbounds
