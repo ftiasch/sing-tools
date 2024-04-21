@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import os
-from typing import IO, Annotated, Any, Self, TextIO, TypeAlias
+from typing import IO, Annotated, Any, Self
 
 import typer
 

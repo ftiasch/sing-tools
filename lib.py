@@ -2,7 +2,7 @@ import base64
 import logging
 import re
 from collections import defaultdict
-from typing import Optional, Type, TypeAlias
+from typing import Optional, TypeAlias
 from urllib.parse import parse_qs, unquote, urlparse
 
 import dns.exception
