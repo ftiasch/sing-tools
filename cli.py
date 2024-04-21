@@ -43,100 +43,67 @@ class Gen:
     def __init__(self: Self, providers: list[BaseProvider]) -> None:
         self.providers = providers
         self.rule_sets = set()
+
+        def rule_set(names: list[str]) -> list[str]:
+            return self.__rule_set(names)
+
+        def domestic_rules(strategy: dict) -> list:
+            return [
+                {
+                    "domain_suffix": [
+                        "bopufund.com",
+                        "ftiasch.xyz",
+                        "limao.tech",
+                        ".syncthing.net",
+                    ],
+                    **strategy,
+                },
+                {
+                    "rule_set": rule_set(
+                        ["geosite-cn", "geosite-apple", "geosite-icloud"]
+                    ),
+                    **strategy,
+                },
+            ]
+
         self.config = {
             "log": {"level": "error", "timestamp": True},
             "dns": {
                 "servers": [
+                    {"tag": "fakeip-dns", "address": "fakeip"},
                     {"tag": "reject-dns", "address": "rcode://refused"},
                     {
-                        "tag": "cloudflare-doh",
-                        "address": "https://1.1.1.1/dns-query",
-                        "address_resolver": "aliyun-doh",
-                        "detour": "PROXY",
-                    },
-                    {
-                        "tag": "aliyun-doh",
-                        "address": "https://223.5.5.5/dns-query",
+                        "tag": "domestic-dns",
+                        "address": "tls://1.12.12.12",
+                        "strategy": "ipv4_only",
                         "detour": "direct-out",
                     },
                 ],
                 "rules": [
-                    {"server": "aliyun-doh", "clash_mode": "Direct"},
-                    {"server": "reject-dns", "rule_set": self.__rule_set(["reject"])},
-                    {
-                        "server": "cloudflare-doh",
-                        "rule_set": ["telegramcidr", "google", "proxy"],
-                    },
-                    {
-                        "server": "aliyun-doh",
-                        "rule_set": self.__rule_set(
-                            [
-                                "geoip-cn",
-                                "applications",
-                                "icloud",
-                                "apple",
-                                "direct",
-                                "lancidr",
-                                "cncidr",
-                            ]
-                        ),
-                    },
+                    *domestic_rules({"server": "domestic-dns"}),
+                    {"query_type": ["A", "CNAME"], "server": "fakeip-dns"},
                 ],
-                "final": "cloudflare-doh",
+                "final": "reject-dns",
+                "fakeip": {
+                    "enabled": True,
+                    "inet4_range": "10.32.0.0/12",
+                },
+                "independent_cache": True,
             },
             "route": {
                 "rule_set": None,
                 "rules": [
-                    {"outbound": "direct-out", "ip_is_private": True},
                     {
                         "outbound": "dns-out",
                         "inbound": "dns-in",
                     },
+                    {"outbound": "direct-out", "inbound": "http-direct-in"},
                     {
-                        "outbound": "reject-out",
-                        "type": "logical",
-                        "mode": "or",
-                        "rules": [
-                            {"network": "tcp", "port": 853},
-                            {"network": "udp", "port": 443},
-                            {"protocol": "stun"},
-                        ],
+                        "outbound": "direct-out",
+                        "rule_set": rule_set(["lancidr", "geoip-cn"]),
                     },
-                    {"outbound": "reject-out", "rule_set": self.__rule_set(["reject"])},
+                    *domestic_rules({"outbound": "direct-out"}),
                     {"outbound": "PROXY", "ip_cidr": ["13.115.121.128"]},
-                    {
-                        "outbound": "direct-out",
-                        "type": "logical",
-                        "mode": "and",
-                        "rules": [
-                            {
-                                "invert": True,
-                                "rule_set": self.__rule_set(
-                                    ["telegramcidr", "google", "proxy"]
-                                ),
-                            },
-                            {
-                                "rule_set": self.__rule_set(
-                                    [
-                                        "geoip-cn",
-                                        "applications",
-                                        "icloud",
-                                        "apple",
-                                        "direct",
-                                        "lancidr",
-                                        "cncidr",
-                                    ]
-                                )
-                            },
-                        ],
-                    },
-                    {
-                        "outbound": "direct-out",
-                        "domain_suffix": [
-                            ".roborock.com",
-                            ".steamserver.net",
-                        ],
-                    },
                 ],
                 "final": "PROXY",
                 "auto_detect_interface": True,
@@ -175,10 +142,11 @@ class Gen:
                 "cache_file": {
                     "enabled": True,
                     "path": "cache.db",
+                    "store_fakeip": True,
                 },
                 "clash_api": {
                     "external_controller": "0.0.0.0:9090",
-                    "external_ui_download_detour": "direct-out",
+                    "external_ui_download_detour": "PROXY",
                 },
             },
         }
@@ -198,6 +166,8 @@ class Gen:
     def get_rule_set_url(r: str) -> str:
         if r.startswith("geoip"):
             return f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
+        if r.startswith("geosite"):
+            return f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{r}.srs"
         return f"https://raw.githubusercontent.com/chg1f/sing-geosite-mixed/rule-set/{r}.srs"
 
     def __get_rule_set(self: Self) -> list[dict]:
@@ -207,7 +177,7 @@ class Gen:
                 {
                     "tag": r,
                     "type": "remote",
-                    "download_detour": "direct-out",
+                    "download_detour": "PROXY",
                     "update_interval": "1d",
                     "format": "binary",
                     "url": self.get_rule_set_url(r),
