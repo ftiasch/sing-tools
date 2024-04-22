@@ -27,7 +27,7 @@ def _is_valid_ip(ip):
 
 
 def _auto(g: str) -> str:
-    return g + " auto"
+    return g + "-auto"
 
 
 FilterResult: TypeAlias = list[list[str]]

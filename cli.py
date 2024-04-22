@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import os
-from typing import IO, Annotated, Any, Self
+from typing import IO, Annotated, Any
 
 import typer
 
@@ -40,11 +40,18 @@ PROXY_TAG = "PROXY"
 
 class Gen:
     providers: list[BaseProvider]
+    download_detour: str
+    ghproxy: bool
+
     rule_sets: set[str]
     config: dict
 
-    def __init__(self: Self, providers: list[BaseProvider]) -> None:
+    def __init__(
+        self, providers: list[BaseProvider], download_detour: str, ghproxy: bool
+    ) -> None:
         self.providers = providers
+        self.download_detour = download_detour
+        self.ghproxy = ghproxy
         self.rule_sets = set()
 
         def rule_set(names: list[str]) -> list[str]:
@@ -102,10 +109,11 @@ class Gen:
                     route_direct(
                         rule_set=rule_set(
                             [
-                                "geoip-cn",
-                                "geosite-cn",
-                                "geosite-apple",
-                                "geosite-icloud",
+                                "geosite-private",
+                                "geosite-apple-cn",
+                                "geosite-google-cn",
+                                "geosite-tld-cn",
+                                "geosite-category-games@cn",
                             ]
                         )
                     ),
@@ -124,8 +132,17 @@ class Gen:
                             ".ygobbs.com",
                         ],
                     ),
+                    route(PROXY_TAG, rule_set=rule_set(["geosite-geolocation-!cn"])),
+                    route_direct(
+                        rule_set=rule_set(
+                            [
+                                "geoip-cn",
+                                "geosite-cn",
+                            ]
+                        )
+                    ),
                 ],
-                "final": "PROXY",
+                "final": PROXY_TAG,
                 "auto_detect_interface": True,
             },
             "inbounds": [
@@ -166,14 +183,14 @@ class Gen:
                 },
                 "clash_api": {
                     "external_controller": "0.0.0.0:9090",
-                    "external_ui_download_detour": "PROXY",
+                    "external_ui_download_detour": self.download_detour,
                 },
             },
         }
         self.config["outbounds"] = self.__get_outbounds()
         self.config["route"]["rule_set"] = self.__get_rule_set()
 
-    def __get_outbounds(self: Self) -> list[dict]:
+    def __get_outbounds(self) -> list[dict]:
         with open("run/outbounds.json") as f:
             outbounds: list[dict] = json.load(f)
         return [
@@ -182,22 +199,23 @@ class Gen:
             {"type": "dns", "tag": "dns-out"},
         ] + outbounds
 
-    @staticmethod
-    def get_rule_set_url(r: str) -> str:
+    def get_rule_set_url(self, r: str) -> str:
         if r.startswith("geoip"):
-            return f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
-        if r.startswith("geosite"):
-            return f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{r}.srs"
-        return f"https://raw.githubusercontent.com/chg1f/sing-geosite-mixed/rule-set/{r}.srs"
+            url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
+        else:
+            url = f"https://raw.githubusercontent.com/chg1f/sing-geosite-mixed/rule-set/{r}.srs"
+        if self.ghproxy:
+            return "https://mirror.ghproxy.com/" + url
+        return url
 
-    def __get_rule_set(self: Self) -> list[dict]:
+    def __get_rule_set(self) -> list[dict]:
         result = []
         for r in self.rule_sets:
             result.append(
                 {
                     "tag": r,
                     "type": "remote",
-                    "download_detour": "PROXY",
+                    "download_detour": self.download_detour,
                     "update_interval": "1d",
                     "format": "binary",
                     "url": self.get_rule_set_url(r),
@@ -205,7 +223,7 @@ class Gen:
             )
         return result
 
-    def __rule_set(self: Self, names: list[str]) -> list[str]:
+    def __rule_set(self, names: list[str]) -> list[str]:
         for name in names:
             self.rule_sets.add(name)
         return names
@@ -230,6 +248,8 @@ def main(
     provider_names: Annotated[
         list[str], typer.Option("--provider", "-p")
     ] = DEFAULT_PROVIDERS,
+    download_detour: Annotated[str, typer.Option("-dd")] = "direct-out",
+    ghproxy: bool = True,
 ):
     os.chdir(os.path.dirname(__file__) or ".")
     setup_logging()
@@ -247,7 +267,7 @@ def main(
     with open("run/outbounds.json", "w") as f:
         dump(parser.get_outbounds(), f)
 
-    gen = Gen(providers)
+    gen = Gen(providers, download_detour=download_detour, ghproxy=ghproxy)
     with open("run/config.json", "w") as f:
         dump(gen.config, f)
 
