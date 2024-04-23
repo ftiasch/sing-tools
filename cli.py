@@ -46,6 +46,13 @@ class Gen:
     rule_sets: set[str]
     config: dict
 
+    @staticmethod
+    def to_domains(domains: list[str]) -> dict:
+        return {
+            "domain": domains,
+            "domain_suffix": ["." + domain for domain in domains],
+        }
+
     def __init__(
         self, providers: list[BaseProvider], download_detour: str, ghproxy: bool
     ) -> None:
@@ -110,27 +117,24 @@ class Gen:
                         rule_set=rule_set(
                             [
                                 "geosite-private",
-                                "geosite-apple-cn",
-                                "geosite-google-cn",
+                                "geosite-apple",
+                                "geosite-steam",
                                 "geosite-tld-cn",
                                 "geosite-category-games@cn",
                             ]
                         )
                     ),
                     route_direct(
-                        domain=[
-                            "linksyssmartwifi.com",
-                            # misa's
-                            "jihuanshe.com",
-                            "ygobbs.com",
-                        ],
-                        domain_suffix=[
-                            ".linksyssmartwifi.com",
-                            ".syncthing.net",
-                            # misa's
-                            ".jihuanshe.com",
-                            ".ygobbs.com",
-                        ],
+                        **self.to_domains(
+                            [
+                                "linksyssmartwifi.com",
+                                "syncthing.net",
+                                # misa's
+                                "moecube.com",
+                                "jihuanshe.com",
+                                "ygobbs.com",
+                            ]
+                        )
                     ),
                     route(PROXY_TAG, rule_set=rule_set(["geosite-geolocation-!cn"])),
                     route_direct(
