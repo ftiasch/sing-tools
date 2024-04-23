@@ -47,7 +47,7 @@ class Gen:
     config: dict
 
     @staticmethod
-    def to_domains(domains: list[str]) -> dict:
+    def domains_and_suffixes(domains: list[str]) -> dict:
         return {
             "domain": domains,
             "domain_suffix": ["." + domain for domain in domains],
@@ -73,13 +73,31 @@ class Gen:
         def route_direct(**kwargs) -> dict:
             return route("direct-out", **kwargs)
 
-        use_ip = {
-            "domain": ["sz.bopufund.com" "ftiasch.xyz", "limao.tech"],
-            "domain_suffix": [
-                ".ftiasch.xyz",
-                ".limao.tech",
-            ],
-        }
+        use_ip = dict(
+            **self.domains_and_suffixes(
+                [
+                    "sz.bopufund.com",
+                    "ftiasch.xyz",
+                    "limao.tech",
+                    "linksyssmartwifi.com",
+                    "syncthing.net",
+                    # misa's
+                    "moecube.com",
+                    "jihuanshe.com",
+                    "ygobbs.com",
+                ]
+            ),
+            rule_set=rule_set(
+                [
+                    "geosite-cn",
+                    "geosite-private",
+                    "geosite-apple@cn",
+                    "geosite-steam@cn",
+                    "geosite-tld-cn",
+                    "geosite-category-games@cn",
+                ]
+            ),
+        )
 
         self.config = {
             "log": {"level": "error", "timestamp": True},
@@ -112,29 +130,8 @@ class Gen:
                     route("dns-out", inbound="dns-in"),
                     route_direct(inbound="http-direct-in"),
                     route(PROXY_TAG, ip_cidr=["13.115.121.128"]),
-                    route_direct(
-                        rule_set=rule_set(
-                            [
-                                "geoip-cn",
-                                "geosite-cn",
-                                "geosite-private",
-                                "geosite-apple@cn",
-                                "geosite-steam@cn",
-                                "geosite-tld-cn",
-                                "geosite-category-games@cn",
-                            ]
-                        ),
-                        **self.to_domains(
-                            [
-                                "linksyssmartwifi.com",
-                                "syncthing.net",
-                                # misa's
-                                "moecube.com",
-                                "jihuanshe.com",
-                                "ygobbs.com",
-                            ]
-                        ),
-                    ),
+                    route_direct(ip_is_private=True, rule_set=rule_set(["geoip-cn"])),
+                    route_direct(**use_ip),
                 ],
                 "final": PROXY_TAG,
                 "auto_detect_interface": True,
