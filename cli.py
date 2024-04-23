@@ -112,19 +112,18 @@ class Gen:
                     route("dns-out", inbound="dns-in"),
                     route_direct(inbound="http-direct-in"),
                     route(PROXY_TAG, ip_cidr=["13.115.121.128"]),
-                    route_direct(ip_is_private=True),
                     route_direct(
                         rule_set=rule_set(
                             [
+                                "geoip-cn",
+                                "geosite-cn",
                                 "geosite-private",
-                                "geosite-apple",
-                                "geosite-steam",
+                                "geosite-apple@cn",
+                                "geosite-steam@cn",
                                 "geosite-tld-cn",
                                 "geosite-category-games@cn",
                             ]
-                        )
-                    ),
-                    route_direct(
+                        ),
                         **self.to_domains(
                             [
                                 "linksyssmartwifi.com",
@@ -134,16 +133,7 @@ class Gen:
                                 "jihuanshe.com",
                                 "ygobbs.com",
                             ]
-                        )
-                    ),
-                    route(PROXY_TAG, rule_set=rule_set(["geosite-geolocation-!cn"])),
-                    route_direct(
-                        rule_set=rule_set(
-                            [
-                                "geoip-cn",
-                                "geosite-cn",
-                            ]
-                        )
+                        ),
                     ),
                 ],
                 "final": PROXY_TAG,

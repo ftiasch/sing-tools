@@ -72,10 +72,7 @@ class BaseProvider:
         region = BaseProvider.guess_region(name)
         if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
             return []
-        tags = [[proxy_tag, self.name]]
-        if region in ("US", "JP", "SG", "TW"):
-            tags.append(["openai"])
-        return tags
+        return [[proxy_tag, self.name]]
 
     def download(self) -> None:
         name, url = self.name, self.url
