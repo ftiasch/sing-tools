@@ -13,6 +13,15 @@ class OkggProvider(BaseProvider):
     def __init__(self):
         super().__init__("okgg", "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2")
 
+    def filter(self, proxy_tag: str, name: str) -> FilterResult:
+        region = BaseProvider.guess_region(name)
+        if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
+            return []
+        tags = [[proxy_tag, self.name]]
+        if region not in ("HK",):
+            tags.append(["HQ"])
+        return tags
+
 
 class WwProvider(BaseProvider):
     def __init__(self):
@@ -132,7 +141,9 @@ class Gen:
                     route(PROXY_TAG, ip_cidr=["13.115.121.128"]),
                     route_direct(ip_is_private=True, rule_set=rule_set(["geoip-cn"])),
                     route_direct(**use_ip),
-                    route("HQ", rule_set=rule_set(["geosite-openai"])),
+                    route(
+                        "HQ", rule_set=rule_set(["geosite-github", "geosite-openai"])
+                    ),
                 ],
                 "final": PROXY_TAG,
                 "auto_detect_interface": True,
