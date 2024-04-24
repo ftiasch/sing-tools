@@ -132,6 +132,7 @@ class Gen:
                     route(PROXY_TAG, ip_cidr=["13.115.121.128"]),
                     route_direct(ip_is_private=True, rule_set=rule_set(["geoip-cn"])),
                     route_direct(**use_ip),
+                    route("HQ", rule_set=rule_set(["geosite-openai"])),
                 ],
                 "final": PROXY_TAG,
                 "auto_detect_interface": True,
