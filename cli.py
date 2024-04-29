@@ -15,7 +15,7 @@ class OkggProvider(BaseProvider):
 
     def filter(self, proxy_tag: str, name: str) -> FilterResult:
         region = BaseProvider.guess_region(name)
-        if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
+        if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
             return []
         tags = [[proxy_tag, self.name]]
         if region not in ("HK",):

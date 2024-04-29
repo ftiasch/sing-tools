@@ -49,6 +49,10 @@ class BaseProvider:
             "SG": ["Singapore", "新加坡"],
             "TW": ["TW"],
             "KR": ["KR"],
+            "ID": [
+                "Jakarta",
+                "🇮🇩",
+            ],
             "MY": [
                 "吉隆坡",
                 "🇲🇾",
@@ -160,6 +164,45 @@ class Parser:
             else:
                 logging.warning("filtered|%s", fragment)
 
+        def parse_vless(parsed_url, q):
+            fp = q.get("fp", [])
+            # known values in `fp`
+            # - `ios`
+            # - `random`
+            if "ios" in fp:
+                return
+            type = q.get("type", [])
+            if not type:
+                return
+            uuid, hostname_part = parsed_url.netloc.split("@", 1)
+            server, server_port = hostname_part.split(":", 1)
+            server = self.__resolve(server)
+            if not server:
+                return
+            config = {
+                "type": "vless",
+                "server": server,
+                "server_port": int(server_port),
+                "uuid": uuid,
+            }
+            securiy = q.get("security", [])
+            if securiy and securiy[0] == "tls":
+                config["tls"] = {
+                    "enabled": True,
+                    "server_name": q["sni"][0],
+                }
+            match type[0]:
+                case "tcp":
+                    return {**config, "network": "tcp", "flow": q.get("flow")[0]}
+                case "grpc":
+                    grpc = {
+                        "type": "grpc",
+                        "service_name": query_params["serviceName"][0],
+                    }
+                    if q.get("path"):
+                        grpc["path"] = q.get("path")[0]
+                    return {**config, "transport": grpc}
+
         with open(f"run/{provider.name}.txt") as f:
             share_links = _b64decode(f.read()).decode("utf-8").splitlines()
         for share_link in share_links:
@@ -171,34 +214,9 @@ class Parser:
             query_params = parse_qs(parsed_url.query)
             match parsed_url.scheme:
                 case "vless":
-                    if (
-                        query_params.get("encryption") == ["none"]
-                        and query_params.get("type") == ["grpc"]
-                        and query_params.get("headerType") == ["none"]
-                        and query_params.get("security") == ["tls"]
-                        and query_params.get("mode") == ["gun"]
-                    ):
-                        uuid, hostname_part = parsed_url.netloc.split("@", 1)
-                        server, server_port = hostname_part.split(":", 1)
-                        server = self.__resolve(server)
-                        if server:
-                            try_add(
-                                fragment,
-                                {
-                                    "type": "vless",
-                                    "server": server,
-                                    "server_port": int(server_port),
-                                    "uuid": uuid,
-                                    "tls": {
-                                        "enabled": True,
-                                        "server_name": query_params["sni"][0],
-                                    },
-                                    "transport": {
-                                        "type": "grpc",
-                                        "service_name": query_params["serviceName"][0],
-                                    },
-                                },
-                            )
+                    outbound = parse_vless(parsed_url, query_params)
+                    if outbound:
+                        try_add(fragment, outbound)
                     else:
                         logging.warning("unknown vless|%s|%s", query_params, fragment)
                 case "trojan":
