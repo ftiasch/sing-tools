@@ -199,8 +199,8 @@ class Parser:
                         "type": "grpc",
                         "service_name": query_params["serviceName"][0],
                     }
-                    if q.get("path"):
-                        grpc["path"] = q.get("path")[0]
+                    # if q.get("path"):
+                    #     grpc["path"] = q.get("path")[0]
                     return {**config, "transport": grpc}
 
         with open(f"run/{provider.name}.txt") as f:
