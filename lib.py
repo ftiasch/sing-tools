@@ -65,6 +65,9 @@ class BaseProvider:
                 "马尼拉",
                 "🇵🇭",
             ],
+            "PL": [
+                "波兰"
+            ]
         }
         for region, matchers in config.items():
             for matcher in matchers:

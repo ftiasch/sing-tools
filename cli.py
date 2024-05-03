@@ -18,8 +18,9 @@ class OkggProvider(BaseProvider):
         if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
             return []
         tags = [[proxy_tag, self.name]]
-        if region not in ("HK",):
-            tags.append(["HQ"])
+        tags.append(["HQ"])
+        # if region not in ("HK",):
+        #     tags.append(["HQ"])
         return tags
 
 
@@ -30,7 +31,12 @@ class WwProvider(BaseProvider):
     def filter(self, proxy_tag: str, name: str) -> FilterResult:
         if "游戏" in name:
             return []
-        return super().filter(proxy_tag, name.split("·")[1])
+        region = BaseProvider.guess_region(name.split("·")[1])
+        if region == "PL":
+            return [["PL"]]
+        if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
+            return []
+        return [[proxy_tag, self.name]]
 
 
 def get_providers(names: list[str]) -> list[BaseProvider]:
