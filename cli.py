@@ -13,7 +13,9 @@ class OkggProvider(BaseProvider):
     def __init__(self):
         super().__init__("okgg", "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2")
 
-    def filter(self, proxy_tag: str, name: str) -> FilterResult:
+    def filter(self, proxy_tag: str, proto: str, name: str) -> FilterResult:
+        if proto == "ss":
+            return []
         region = BaseProvider.guess_region(name)
         if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
             return []
@@ -28,7 +30,7 @@ class WwProvider(BaseProvider):
     def __init__(self):
         super().__init__("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
-    def filter(self, proxy_tag: str, name: str) -> FilterResult:
+    def filter(self, proxy_tag: str, proto: str, name: str) -> FilterResult:
         if "游戏" in name:
             return []
         region = BaseProvider.guess_region(name.split("·")[1])

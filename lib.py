@@ -73,7 +73,7 @@ class BaseProvider:
                     return region
         return "N/A"
 
-    def filter(self, proxy_tag: str, name: str) -> FilterResult:
+    def filter(self, proxy_tag: str, proto: str, name: str) -> FilterResult:
         region = BaseProvider.guess_region(name)
         if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
             return []
@@ -166,8 +166,8 @@ class Parser:
         return (uuid, server, server_port)
 
     def parse(self, provider: BaseProvider):
-        def try_add(fragment, outbound):
-            paths = provider.filter(self.proxy_tag, fragment)
+        def try_add(fragment, proto, outbound):
+            paths = provider.filter(self.proxy_tag, proto, fragment)
             if paths:
                 outbound["tag"] = self.__get_tag(fragment)
                 self.outbounds.append((paths, outbound))
@@ -224,7 +224,7 @@ class Parser:
                 case "vless":
                     outbound = parse_vless(parsed_url, query_params)
                     if outbound:
-                        try_add(fragment, outbound)
+                        try_add(fragment, "vless", outbound)
                     else:
                         logging.warning("unknown vless|%s|%s", query_params, fragment)
                 case "trojan":
@@ -232,6 +232,7 @@ class Parser:
                     if server:
                         try_add(
                             fragment,
+                            "trojan",
                             {
                                 "type": "trojan",
                                 "server": server,
@@ -253,6 +254,7 @@ class Parser:
                     if server:
                         try_add(
                             fragment,
+                            "ss",
                             {
                                 "type": "shadowsocks",
                                 "server": server,
