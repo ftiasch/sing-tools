@@ -12,10 +12,10 @@ import dns.resolver
 import requests
 
 
-def _b64decode(b: str) -> bytes:
+def _b64decode(b: str) -> str:
     while len(b) % 4 != 0:
         b += "="
-    return base64.urlsafe_b64decode(b)
+    return base64.urlsafe_b64decode(b).decode("utf-8")
 
 
 def _is_valid_ip(ip):
@@ -212,7 +212,7 @@ class Parser:
                     return {**config, "transport": grpc}
 
         with open(f"run/{provider.name}.txt") as f:
-            share_links = _b64decode(f.read()).decode("utf-8").splitlines()
+            share_links = _b64decode(f.read()).splitlines()
         for share_link in share_links:
             try:
                 parsed_url = urlparse(share_link)
@@ -250,7 +250,7 @@ class Parser:
                         logging.warning("unknown trojan|%s|%s", query_params, fragment)
                 case "ss":
                     uuid, server, server_port = self.__parse_url(parsed_url)
-                    print(parsed_url)
+                    method, password = _b64decode(uuid).split(":")
                     if server:
                         try_add(
                             fragment,
@@ -259,7 +259,8 @@ class Parser:
                                 "type": "shadowsocks",
                                 "server": server,
                                 "server_port": server_port,
-                                "password": uuid,
+                                "password": password,
+                                "method": method,
                             },
                         )
                     else:
