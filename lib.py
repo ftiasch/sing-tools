@@ -2,8 +2,8 @@ import base64
 import logging
 import re
 from collections import defaultdict
-from typing import Optional, TypeAlias
-from urllib.parse import parse_qs, unquote, urlparse
+from typing import Optional, TypeAlias, Tuple
+from urllib.parse import parse_qs, unquote, urlparse, ParseResult
 
 import dns.exception
 import dns.nameserver
@@ -47,7 +47,7 @@ class BaseProvider:
             "HK": ["HongKong", "HK", "港", "🇭🇰"],
             "JP": ["Osaka", "JP", "日", "🇯🇵"],
             "SG": ["Singapore", "新加坡"],
-            "TW": ["TW"],
+            "TW": ["Taiwan", "TW"],
             "KR": ["KR"],
             "ID": [
                 "Jakarta",
@@ -65,9 +65,7 @@ class BaseProvider:
                 "马尼拉",
                 "🇵🇭",
             ],
-            "PL": [
-                "波兰"
-            ]
+            "PL": ["波兰"],
         }
         for region, matchers in config.items():
             for matcher in matchers:
@@ -158,6 +156,15 @@ class Parser:
             tag = otag + f" #{count}"
         return tag
 
+    def __parse_url(self, parsed_url: ParseResult) -> Tuple[str, str | None, int]:
+        uuid, hostname_part = parsed_url.netloc.split("@", 1)
+        server, server_port = hostname_part.split(":", 1)
+        server_port = int(server_port)
+        server = self.__resolve(server)
+        if not server:
+            return (uuid, None, server_port)
+        return (uuid, server, server_port)
+
     def parse(self, provider: BaseProvider):
         def try_add(fragment, outbound):
             paths = provider.filter(self.proxy_tag, fragment)
@@ -177,15 +184,13 @@ class Parser:
             type = q.get("type", [])
             if not type:
                 return
-            uuid, hostname_part = parsed_url.netloc.split("@", 1)
-            server, server_port = hostname_part.split(":", 1)
-            server = self.__resolve(server)
+            uuid, server, server_port = self.__parse_url(parsed_url)
             if not server:
                 return
             config = {
                 "type": "vless",
                 "server": server,
-                "server_port": int(server_port),
+                "server_port": server_port,
                 "uuid": uuid,
             }
             securiy = q.get("security", [])
@@ -223,23 +228,40 @@ class Parser:
                     else:
                         logging.warning("unknown vless|%s|%s", query_params, fragment)
                 case "trojan":
-                    uuid, hostname_part = parsed_url.netloc.split("@", 1)
-                    server, server_port = hostname_part.split(":", 1)
-                    try_add(
-                        fragment,
-                        {
-                            "type": "trojan",
-                            "server": server,
-                            "server_port": int(server_port),
-                            "password": uuid,
-                            "tls": {
-                                "enabled": True,
-                                "insecure": query_params.get("allowInsecure", ["0"])
-                                == ["1"],
-                                "server_name": query_params["peer"][0],
+                    uuid, server, server_port = self.__parse_url(parsed_url)
+                    if server:
+                        try_add(
+                            fragment,
+                            {
+                                "type": "trojan",
+                                "server": server,
+                                "server_port": server_port,
+                                "password": uuid,
+                                "tls": {
+                                    "enabled": True,
+                                    "insecure": query_params.get("allowInsecure", ["0"])
+                                    == ["1"],
+                                    "server_name": query_params["peer"][0],
+                                },
                             },
-                        },
-                    )
+                        )
+                    else:
+                        logging.warning("unknown trojan|%s|%s", query_params, fragment)
+                case "ss":
+                    uuid, server, server_port = self.__parse_url(parsed_url)
+                    print(parsed_url)
+                    if server:
+                        try_add(
+                            fragment,
+                            {
+                                "type": "shadowsocks",
+                                "server": server,
+                                "server_port": server_port,
+                                "password": uuid,
+                            },
+                        )
+                    else:
+                        logging.warning("unknown ss|%s|%s", parsed_url.netloc, fragment)
                 case _:
                     logging.warning(
                         "unknown proto|scheme=%s|%s", parsed_url.scheme, fragment

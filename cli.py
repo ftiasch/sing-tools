@@ -39,6 +39,14 @@ class WwProvider(BaseProvider):
         return [[proxy_tag, self.name]]
 
 
+class SsrDogProvider(BaseProvider):
+    def __init__(self):
+        super().__init__(
+            "ssrdog",
+            "https://wow.dogss-host.bond/api/v1/client/subscribe?token=75c680c64ec9ab655585fe6712da4fe2",
+        )
+
+
 def get_providers(names: list[str]) -> list[BaseProvider]:
     providers = []
     for name in names:
@@ -47,6 +55,8 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
                 providers.append(OkggProvider())
             case "ww":
                 providers.append(WwProvider())
+            case "ssrdog":
+                providers.append(SsrDogProvider())
     return providers
 
 
