@@ -85,8 +85,11 @@ class Gen:
         self.ghproxy = ghproxy
         self.rule_sets = set()
 
-        def rule_set(names: list[str]) -> list[str]:
-            return self.__rule_set(names)
+        def rule_set(name: str) -> str:
+            return self.__rule_set(name)
+
+        def rule_sets(names: list[str]) -> list[str]:
+            return self.__rule_sets(names)
 
         def route(outbound: str, **kwargs) -> dict:
             return {
@@ -97,68 +100,88 @@ class Gen:
         def route_direct(**kwargs) -> dict:
             return route("direct-out", **kwargs)
 
-        use_ip = dict(
-            **self.domains_and_suffixes(
-                [
-                    "sz.bopufund.com",
-                    "ftiasch.xyz",
-                    "limao.tech",
-                    "linksyssmartwifi.com",
-                    "syncthing.net",
-                    # misa's
-                    "moecube.com",
-                    "jihuanshe.com",
-                    "ygobbs.com",
-                ]
-            ),
-            rule_set=rule_set(
-                [
-                    "geosite-cn",
-                    "geosite-private",
-                    "geosite-apple@cn",
-                    "geosite-steam@cn",
-                    "geosite-tld-cn",
-                    "geosite-category-games@cn",
-                ]
-            ),
-        )
+        # use_ip = dict(
+        #     **self.domains_and_suffixes(
+        #         [
+        #             "sz.bopufund.com",
+        #             "ftiasch.xyz",
+        #             "limao.tech",
+        #             "linksyssmartwifi.com",
+        #             "syncthing.net",
+        #             # misa's
+        #             "moecube.com",
+        #             "jihuanshe.com",
+        #             "ygobbs.com",
+        #         ]
+        #     ),
+        #     rule_set=rule_sets(
+        #         [
+        #             "geosite-cn",
+        #             "geosite-private",
+        #             "geosite-apple@cn",
+        #             "geosite-steam@cn",
+        #             "geosite-tld-cn",
+        #             "geosite-category-games@cn",
+        #         ]
+        #     ),
+        # )
 
         self.config = {
             "log": {"level": "error", "timestamp": True},
             "dns": {
                 "servers": [
-                    {"tag": "fakeip-dns", "address": "fakeip"},
-                    {"tag": "reject-dns", "address": "rcode://refused"},
                     {
-                        "tag": "domestic-dns",
+                        "tag": "proxy-dns",
+                        "strategy": "ipv4_only",
+                        "address": "tls://1.1.1.1",
+                    },
+                    {
+                        "tag": "direct-dns",
                         "address": "tls://1.12.12.12",
                         "strategy": "ipv4_only",
                         "detour": "direct-out",
                     },
                 ],
                 "rules": [
-                    {"outbound": "any", "server": "domestic-dns"},
-                    {**use_ip, "server": "domestic-dns"},
-                    {"query_type": ["A"], "server": "fakeip-dns"},
+                    {"outbound": "any", "server": "direct-dns"},
+                    {
+                        "rule_set": rule_set("geosite-geolocation-cn"),
+                        "server": "direct-dns",
+                    },
+                    # {**use_ip, "server": "direct-dns"},
+                    {
+                        "type": "logical",
+                        "mode": "and",
+                        "rules": [
+                            {
+                                "rule_set": rule_set("geosite-geolocation-!cn"),
+                                "invert": True,
+                            },
+                            {"rule_set": rule_set("geoip-cn")},
+                        ],
+                        "server": "direct-dns",
+                    },
                 ],
-                "final": "reject-dns",
-                "fakeip": {
-                    "enabled": True,
-                    "inet4_range": "10.32.0.0/12",
-                },
-                "independent_cache": True,
             },
             "route": {
                 "rule_set": None,
                 "rules": [
                     route("dns-out", inbound="dns-in"),
                     route_direct(inbound="http-direct-in"),
-                    route(PROXY_TAG, ip_cidr=["13.115.121.128"]),
-                    route_direct(ip_is_private=True, rule_set=rule_set(["geoip-cn"])),
-                    route_direct(**use_ip),
-                    # route(
-                    #     "HQ", rule_set=rule_set(["geosite-github", "geosite-openai"])
-                    # ),
+                    {
+                        "type": "logical",
+                        "mode": "or",
+                        "rules": [
+                            {"port": 853},
+                            {"network": "udp", "port": 443},
+                            {"protocol": "stun"},
+                        ],
+                        "outbound": "reject-out",
+                    },
+                    route_direct(
+                        ip_is_private=True,
+                        rule_set=rule_sets(["geoip-cn", "geosite-geolocation-cn"]),
+                    ),
                 ],
                 "final": PROXY_TAG,
                 "auto_detect_interface": True,
@@ -194,12 +217,9 @@ class Gen:
             ],
             "outbounds": None,
             "experimental": {
-                "cache_file": {
-                    "enabled": True,
-                    "path": "cache.db",
-                    "store_fakeip": True,
-                },
+                "cache_file": {"enabled": True, "path": "cache.db", "store_rdrc": True},
                 "clash_api": {
+                    "default_mode": "Enhanced",
                     "external_controller": "0.0.0.0:9090",
                     "external_ui_download_detour": self.download_detour,
                 },
@@ -241,9 +261,13 @@ class Gen:
             )
         return result
 
-    def __rule_set(self, names: list[str]) -> list[str]:
+    def __rule_set(self, name: str) -> str:
+        self.rule_sets.add(name)
+        return name
+
+    def __rule_sets(self, names: list[str]) -> list[str]:
         for name in names:
-            self.rule_sets.add(name)
+            self.__rule_set(name)
         return names
 
 
