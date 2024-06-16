@@ -75,10 +75,7 @@ class Gen:
 
     @staticmethod
     def domains_and_suffixes(domains: list[str]) -> dict:
-        return {
-            "domain": domains,
-            "domain_suffix": ["." + domain for domain in domains],
-        }
+        return {"domain_suffix": domains}
 
     def __init__(
         self, providers: list[BaseProvider], download_detour: str, ghproxy: bool
