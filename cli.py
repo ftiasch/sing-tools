@@ -201,10 +201,7 @@ class Gen:
                 },
                 "clash_api": {
                     "external_controller": "0.0.0.0:9090",
-                    "external_ui_download_url": self.proxy_url(
-                        "https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip"
-                    ),
-                    "external_ui_download_detour": self.download_detour,
+                    "external_ui": "/usr/share/yacd-meta",
                 },
             },
         }
