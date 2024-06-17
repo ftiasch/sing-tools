@@ -11,7 +11,7 @@ python cli.py $@
 rsync run/config.json marf-gw:/etc/sing-box
 # rsync -arz /usr/share/sing-box/sing-geosite-rule-set/ marf-gw:/usr/share/sing-geosite/
 # rsync -arz /usr/share/sing-box/sing-geoip-rule-set/ marf-gw:/usr/share/sing-geoip/
-# rsync -arz /usr/share/yacd-meta/ marf-gw:/usr/share/yacd-meta/
+rsync -arz /usr/share/yacd-meta/ marf-gw:/usr/share/yacd-meta/
 ssh marf-gw service sing-box restart
 
 prefix=/home/ftiasch/Sync/sing
