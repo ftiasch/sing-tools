@@ -201,6 +201,9 @@ class Gen:
                 },
                 "clash_api": {
                     "external_controller": "0.0.0.0:9090",
+                    "external_ui_download_url": self.proxy_url(
+                        "https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip"
+                    ),
                     "external_ui_download_detour": self.download_detour,
                 },
             },
@@ -217,14 +220,17 @@ class Gen:
             {"type": "dns", "tag": "dns-out"},
         ] + outbounds
 
+    def proxy_url(self, u: str) -> str:
+        if self.ghproxy:
+            return "https://mirror.ghproxy.com/" + u
+        return u
+
     def get_rule_set_url(self, r: str) -> str:
         if r.startswith("geoip"):
             url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
         else:
             url = f"https://raw.githubusercontent.com/chg1f/sing-geosite-mixed/rule-set/{r}.srs"
-        if self.ghproxy:
-            return "https://mirror.ghproxy.com/" + url
-        return url
+        return self.proxy_url(url)
 
     def __get_rule_set(self) -> list[dict]:
         result = []
