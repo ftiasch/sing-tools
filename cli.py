@@ -125,6 +125,10 @@ class Gen:
         #         ]
         #     ),
         # )
+        direct_rule_sets = [
+            "geosite-geolocation-cn",
+            "geosite-apple",
+        ]
 
         self.config = {
             "log": {"level": "error", "timestamp": True},
@@ -145,7 +149,7 @@ class Gen:
                 "rules": [
                     {"outbound": "any", "server": "direct-dns"},
                     {
-                        "rule_set": rule_set("geosite-geolocation-cn"),
+                        "rule_set": rule_sets(direct_rule_sets),
                         "server": "direct-dns",
                     },
                     # {**use_ip, "server": "direct-dns"},
@@ -180,7 +184,7 @@ class Gen:
                     },
                     route_direct(
                         ip_is_private=True,
-                        rule_set=rule_sets(["geoip-cn", "geosite-geolocation-cn"]),
+                        rule_set=rule_sets(["geoip-cn", *direct_rule_sets]),
                     ),
                 ],
                 "final": PROXY_TAG,
