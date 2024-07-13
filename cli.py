@@ -105,10 +105,6 @@ class Gen:
                     "limao.tech",
                     "linksyssmartwifi.com",
                     "syncthing.net",
-                    # misa's
-                    "moecube.com",
-                    "jihuanshe.com",
-                    "ygobbs.com",
                 ]
             ),
             rule_set=rule_set(
@@ -153,7 +149,6 @@ class Gen:
                 "rules": [
                     route("dns-out", inbound="dns-in"),
                     route_direct(inbound="http-direct-in"),
-                    route(PROXY_TAG, ip_cidr=["13.115.121.128"]),
                     route_direct(ip_is_private=True, rule_set=rule_set(["geoip-cn"])),
                     route_direct(**use_ip),
                     # route(
