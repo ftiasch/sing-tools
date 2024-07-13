@@ -100,7 +100,7 @@ class Gen:
         use_ip = dict(
             **self.domains_and_suffixes(
                 [
-                    "sz.bopufund.com",
+                    "bopufund.com",
                     "ftiasch.xyz",
                     "limao.tech",
                     "linksyssmartwifi.com",

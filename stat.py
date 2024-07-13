@@ -9,17 +9,11 @@ import pandas as pd
 import websockets
 
 API_URI = "wss://sing.ftiasch.xyz/connections"
-RULES = [
-    ("music.126.net", "direct-out"),
-    ("music.163.com", "direct-out"),
-    ("bilivideo.com", "direct-out"),
-    ("apple.com", "direct-out"),
-    ("codeforces.com", "PROXY"),
-]
 
 
 async def main():
     pd.set_option("display.max_rows", 500)
+    rules = pd.read_csv("rules.csv")
     async with websockets.connect(API_URI) as wss:
         data = json.loads(await wss.recv())
         stat = []
@@ -37,12 +31,12 @@ async def main():
                 host = meta["host"]
                 matched = False
                 if host:
-                    for rule_suffix, rule_chain in RULES:
-                        if host.endswith(rule_suffix):
+                    for _, rule in rules.iterrows():
+                        if host.endswith(rule["suffix"]):
                             matched = True
-                            if chain != rule_chain:
+                            if chain != rule["chain"]:
                                 print(
-                                    f"WARN: {host} is route to {chain} instead of {rule_chain}"
+                                    f"WARN: {host} is route to {chain} instead of {rule['chain']}"
                                 )
                 if not matched:
                     stat.append(
