@@ -113,8 +113,6 @@ class Gen:
                     "geosite-private",
                     "geosite-apple",
                     "geosite-steam@cn",
-                    "geosite-tld-cn",
-                    "geosite-category-games@cn",
                 ]
             ),
         )
