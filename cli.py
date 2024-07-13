@@ -111,7 +111,7 @@ class Gen:
                 [
                     "geosite-cn",
                     "geosite-private",
-                    "geosite-apple@cn",
+                    "geosite-apple",
                     "geosite-steam@cn",
                     "geosite-tld-cn",
                     "geosite-category-games@cn",
