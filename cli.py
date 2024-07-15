@@ -62,7 +62,7 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
     return providers
 
 
-PROXY_TAG = "PROXY"
+PROXY_TAG = "proxy-out"
 
 
 class Gen:
@@ -72,10 +72,6 @@ class Gen:
 
     rule_sets: set[str]
     config: dict
-
-    @staticmethod
-    def domains_and_suffixes(domains: list[str]) -> dict:
-        return {"domain_suffix": domains}
 
     def __init__(
         self, providers: list[BaseProvider], download_detour: str, ghproxy: bool
@@ -97,25 +93,11 @@ class Gen:
         def route_direct(**kwargs) -> dict:
             return route("direct-out", **kwargs)
 
-        use_ip = dict(
-            **self.domains_and_suffixes(
-                [
-                    "bopufund.com",
-                    "ftiasch.xyz",
-                    "limao.tech",
-                    "linksyssmartwifi.com",
-                    "syncthing.net",
-                ]
-            ),
-            rule_set=rule_set(
-                [
-                    "geosite-cn",
-                    "geosite-private",
-                    "geosite-apple",
-                    "geosite-steam@cn",
-                ]
-            ),
-        )
+        direct_domains = [
+            "bopufund.com",
+            "ftiasch.xyz",
+            "limao.tech",
+        ]
 
         self.config = {
             "log": {"level": "error", "timestamp": True},
@@ -132,7 +114,11 @@ class Gen:
                 ],
                 "rules": [
                     {"outbound": "any", "server": "domestic-dns"},
-                    {**use_ip, "server": "domestic-dns"},
+                    {
+                        "domain_suffix": direct_domains,
+                        "rule_set": rule_set(["geosite-private"]),
+                        "server": "domestic-dns",
+                    },
                     {"query_type": ["A"], "server": "fakeip-dns"},
                 ],
                 "final": "reject-dns",
@@ -147,8 +133,49 @@ class Gen:
                 "rules": [
                     route("dns-out", inbound="dns-in"),
                     route_direct(inbound="http-direct-in"),
-                    route_direct(ip_is_private=True, rule_set=rule_set(["geoip-cn"])),
-                    route_direct(**use_ip),
+                    route(
+                        PROXY_TAG,
+                        rule_set=rule_set(
+                            [
+                                "geosite-google",
+                            ]
+                        ),
+                    ),
+                    route_direct(
+                        rule_set=rule_set(
+                            [
+                                "geoip-cn",
+                                "geosite-private",
+                                "geosite-cn",
+                                "geosite-apple@cn",
+                                "geosite-icloudprivaterelay",
+                                "geosite-steam@cn",
+                            ]
+                        ),
+                    ),
+                    route_direct(
+                        rule_set=rule_set(
+                            [
+                                "geoip-cn",
+                                "geosite-private",
+                                "geosite-cn",
+                                "geosite-apple@cn",
+                                "geosite-icloudprivaterelay",
+                                "geosite-steam@cn",
+                            ]
+                        ),
+                    ),
+                    route_direct(domain_suffix=["courier.push.apple.com"]),
+                    route_direct(port=[123]),
+                    route_direct(
+                        source_ip_cidr=[
+                            "192.168.1.120",
+                            "192.168.1.182",
+                            "192.168.1.183",
+                            "192.168.1.215",
+                            "192.168.1.221",
+                        ]  # Mijia Cloud
+                    ),
                     # route(
                     #     "HQ", rule_set=rule_set(["geosite-github", "geosite-openai"])
                     # ),

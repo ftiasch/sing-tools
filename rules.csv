@@ -1,13 +1,20 @@
-suffix,chain
-126.net,direct-out
-163.com,direct-out
-bilivideo.com,direct-out
-apple.com,direct-out
-codeforces.com,PROXY
-Mijia Cloud,direct-out
-x.com,PROXY
-telegram.org,PROXY
-proton.me,PROXY
-qq.com,direct-out
-.cn,direct-out
-huya.com,direct-out
+suffix,chain,remark
+126.net,direct-out,
+163.com,direct-out,
+bilivideo.com,direct-out,
+apple.com,direct-out,
+codeforces.com,proxy-out,
+Mijia Cloud,direct-out,
+detectportal.firefox.com,direct-out
+x.com,proxy-out,
+telegram.org,proxy-out,
+proton.me,proxy-out,
+qq.com,direct-out,
+.cn,direct-out,
+huya.com,direct-out,
+msstatic.com,direct-out,虎牙
+google.com,proxy-out
+mi.com,direct-out,
+slack.com,proxy-out,
+bilibili.com,direct-out,
+hdslb.com,direct-out,Bilibili

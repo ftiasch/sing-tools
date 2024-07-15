@@ -36,8 +36,9 @@ async def main():
                             matched = True
                             if chain != rule["chain"]:
                                 print(
-                                    f"WARN: {host} is route to {chain} instead of {rule['chain']}"
+                                    f"WARN: {host} is route to {chain} instead of {rule['chain']}: suffix={rule['suffix']}"
                                 )
+                            break
                 if not matched:
                     stat.append(
                         {
@@ -52,7 +53,9 @@ async def main():
                         }
                     )
         stat = pd.DataFrame(stat)
-        print(stat.sort_values("download", ascending=False))
+        for g, df in stat.groupby("chain"):
+            print(g)
+            print(df.sort_values("download", ascending=False))
 
 
 if __name__ == "__main__":
