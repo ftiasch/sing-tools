@@ -42,8 +42,8 @@ async def main():
                 if not matched:
                     stat.append(
                         {
-                            "download": download,
-                            "download_rate": download_rate,
+                            "download_MB": download / 1024 / 1024,
+                            "download_rate (KB/s)": download_rate / 1024,
                             "upload": conn["upload"],
                             "host": host,
                             "dport": meta["destinationPort"],
@@ -55,7 +55,7 @@ async def main():
         stat = pd.DataFrame(stat)
         for g, df in stat.groupby("chain"):
             print(g)
-            print(df.sort_values("download", ascending=False))
+            print(df.sort_values("download_MB", ascending=False))
 
 
 if __name__ == "__main__":

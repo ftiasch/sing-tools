@@ -153,19 +153,7 @@ class Gen:
                             ]
                         ),
                     ),
-                    route_direct(
-                        rule_set=rule_set(
-                            [
-                                "geoip-cn",
-                                "geosite-private",
-                                "geosite-cn",
-                                "geosite-apple@cn",
-                                "geosite-icloudprivaterelay",
-                                "geosite-steam@cn",
-                            ]
-                        ),
-                    ),
-                    route_direct(domain_suffix=["courier.push.apple.com"]),
+                    route_direct(domain_suffix=["courier.push.apple.com", "xdrtc.com"]),
                     route_direct(port=[123]),
                     route_direct(
                         source_ip_cidr=[
