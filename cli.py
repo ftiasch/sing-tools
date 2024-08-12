@@ -107,7 +107,7 @@ class Gen:
                     {"tag": "reject-dns", "address": "rcode://refused"},
                     {
                         "tag": "domestic-dns",
-                        "address": "tls://1.12.12.12",
+                        "address": "127.0.0.1:6053",
                         "strategy": "ipv4_only",
                         "detour": "direct-out",
                     },
@@ -133,14 +133,6 @@ class Gen:
                 "rules": [
                     route("dns-out", inbound="dns-in"),
                     route_direct(inbound="http-direct-in"),
-                    route(
-                        PROXY_TAG,
-                        rule_set=rule_set(
-                            [
-                                "geosite-google",
-                            ]
-                        ),
-                    ),
                     route_direct(
                         rule_set=rule_set(
                             [
@@ -153,7 +145,13 @@ class Gen:
                             ]
                         ),
                     ),
-                    route_direct(domain_suffix=["courier.push.apple.com", "xdrtc.com"]),
+                    route_direct(
+                        domain_suffix=[
+                            "courier.push.apple.com",
+                            "syncthing.net",
+                            "xdrtc.com",
+                        ]
+                    ),
                     route_direct(port=[123]),
                     route_direct(
                         source_ip_cidr=[
@@ -164,9 +162,6 @@ class Gen:
                             "192.168.1.221",
                         ]  # Mijia Cloud
                     ),
-                    # route(
-                    #     "HQ", rule_set=rule_set(["geosite-github", "geosite-openai"])
-                    # ),
                 ],
                 "final": PROXY_TAG,
                 "auto_detect_interface": True,
