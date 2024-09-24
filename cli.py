@@ -11,7 +11,7 @@ from lib import BaseProvider, FilterResult, Parser
 
 class OkggProvider(BaseProvider):
     def __init__(self):
-        super().__init__("okgg", "https://rss.okggrss.top/link/3tddh0FHKbzOdLoE?mu=2")
+        super().__init__("okgg", "https://rss.okxyz.xyz/link/nPsuuOMh6xq1lyS5?mu=2")
 
     def filter(self, proxy_tag: str, proto: str, name: str) -> FilterResult:
         if proto == "ss":
@@ -20,7 +20,6 @@ class OkggProvider(BaseProvider):
         if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
             return []
         tags = [[proxy_tag, self.name]]
-        tags.append(["HQ"])
         # if region not in ("HK",):
         #     tags.append(["HQ"])
         return tags
@@ -34,8 +33,6 @@ class WwProvider(BaseProvider):
         if "游戏" in name:
             return []
         region = BaseProvider.guess_region(name.split("·")[1])
-        if region == "PL":
-            return [["PL"]]
         if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
             return []
         return [[proxy_tag, self.name]]
@@ -141,13 +138,14 @@ class Gen:
                                 "geosite-cn",
                                 "geosite-apple@cn",
                                 "geosite-icloudprivaterelay",
-                                "geosite-steam@cn",
                             ]
                         ),
                     ),
                     route_direct(
                         domain_suffix=[
                             "courier.push.apple.com",
+                            "rss.okxyz.xyz",
+                            "steamcontent.com",
                             "syncthing.net",
                             "xdrtc.com",
                         ]
@@ -162,6 +160,7 @@ class Gen:
                             "192.168.1.221",
                         ]  # Mijia Cloud
                     ),
+                    route("ww", rule_set=rule_set(["geosite-youtube"])),
                 ],
                 "final": PROXY_TAG,
                 "auto_detect_interface": True,
@@ -229,7 +228,7 @@ class Gen:
         if r.startswith("geoip"):
             url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
         else:
-            url = f"https://raw.githubusercontent.com/chg1f/sing-geosite-mixed/rule-set/{r}.srs"
+            url = f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{r}.srs"
         return self.proxy_url(url)
 
     def __get_rule_set(self) -> list[dict]:
