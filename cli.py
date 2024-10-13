@@ -42,7 +42,7 @@ class SsrDogProvider(BaseProvider):
     def __init__(self):
         super().__init__(
             "ssrdog",
-            "https://wow.dogss-host.bond/api/v1/client/subscribe?token=75c680c64ec9ab655585fe6712da4fe2",
+            "https://no1-svip.api-baobaog.rest/s?t=75c680c64ec9ab655585fe6712da4fe2",
         )
 
 
@@ -134,10 +134,12 @@ class Gen:
                         rule_set=rule_set(
                             [
                                 "geoip-cn",
-                                "geosite-private",
-                                "geosite-cn",
+                                "geosite-adobe",
+                                "geosite-adobe-activation",
                                 "geosite-apple@cn",
+                                "geosite-cn",
                                 "geosite-icloudprivaterelay",
+                                "geosite-private",
                             ]
                         ),
                     ),
@@ -156,6 +158,7 @@ class Gen:
                             "192.168.1.120",
                             "192.168.1.182",
                             "192.168.1.183",
+                            "192.168.1.185",
                             "192.168.1.215",
                             "192.168.1.221",
                         ]  # Mijia Cloud
@@ -178,9 +181,9 @@ class Gen:
                 {
                     "type": "tun",
                     "tag": "tun-in",
-                    "mtu": 1492,
-                    "gso": True,
-                    "inet4_address": "172.19.0.1/30",
+                    # "mtu": 1492,
+                    # "gso": True,
+                    "address": ["172.19.0.1/30"],
                     "auto_route": True,
                     "strict_route": False,
                     "stack": "system",
@@ -221,7 +224,7 @@ class Gen:
 
     def proxy_url(self, u: str) -> str:
         if self.ghproxy:
-            return "https://mirror.ghproxy.com/" + u
+            return "https://ghp.ci/" + u
         return u
 
     def get_rule_set_url(self, r: str) -> str:
