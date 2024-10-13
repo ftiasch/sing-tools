@@ -1,6 +1,0 @@
-dnspython
-python-dateutil
-requests
-typer
-websockets
-pandas

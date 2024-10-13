@@ -1,6 +1,0 @@
-FROM openwrt/rootfs:aarch64_cortex-a53-21.02-SNAPSHOT
-
-# RUN mkdir /var/log/ \
-#   && opkg update \
-#   && opkg install golang
-
