@@ -165,7 +165,7 @@ class Gen:
                     ),
                     # route("ww", rule_set=rule_set(["geosite-youtube"])),
                 ],
-                "final": "direct-out",
+                "final": PROXY_TAG,
                 "auto_detect_interface": True,
             },
             "inbounds": [

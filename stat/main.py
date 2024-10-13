@@ -16,25 +16,29 @@ def get_base_domain(domain: str) -> str:
 
 @app.command()
 def stat(*, db_path="conn"):
-    stat = {}
+    stat = []
     with shelve.open(db_path, "r") as db:
         for conn in db.values():
             metadata = conn["metadata"]
+            if conn["rule"].endswith("direct-out"):
+                continue
             host = metadata["host"]
             if host:
                 base_domain = get_base_domain(host)
                 if base_domain not in stat:
-                    stat[base_domain] = {
-                        "base_domain": base_domain,
-                        "download": 0,
-                        "upload": 0,
-                    }
-                stat[base_domain]["download"] += conn["download"]
-                stat[base_domain]["upload"] += conn["upload"]
-    stat = pd.DataFrame(stat.values())
+                    stat.append(
+                        {
+                            "base_domain": base_domain,
+                            "rule": conn["rule"],
+                            "download": conn["download"] / 1_000_000,
+                            "upload": conn["upload"] / 1_000_000,
+                        }
+                    )
+    stat = pd.DataFrame(stat)
     stat["sum"] = stat["download"] + stat["upload"]
-    stat.sort_values("sum", ascending=False, inplace=True)
-    stat.to_csv(sys.stdout)
+    stat.groupby(["base_domain", "rule"]).sum().sort_values(
+        "sum", ascending=False
+    ).to_csv(sys.stdout)
 
 
 @app.command()

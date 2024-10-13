@@ -22,8 +22,7 @@ class Store:
 
     def process(self, data):
         for conn in data["connections"]:
-            if conn["chains"][-1] == "proxy-out":
-                self.db[conn["id"]] = conn
+            self.db[conn["id"]] = conn
         logging.info("len(db)=%d", len(self.db))
 
 
