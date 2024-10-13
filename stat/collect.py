@@ -3,6 +3,7 @@ import shelve
 
 import websocket
 import logging
+import signal
 
 API_URI = "wss://sing.ftiasch.xyz/connections"
 
@@ -10,31 +11,6 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s|%(levelname)s|%(message)s",
 )
-# {
-#   "chains": [
-#     "IEPL·台湾TW0·商宽C·均衡·1000M",
-#     "ww-auto",
-#     "ww",
-#     "proxy-out"
-#   ],
-#   "download": 6331,
-#   "id": "76ce9d48-9e9d-4f5a-b7cc-1731636e78e6",
-#   "metadata": {
-#     "destinationIP": "",
-#     "destinationPort": "443",
-#     "dnsMode": "normal",
-#     "host": "client.wns.windows.com",
-#     "network": "tcp",
-#     "processPath": "",
-#     "sourceIP": "192.168.1.200",
-#     "sourcePort": "53260",
-#     "type": "tun/tun-in"
-#   },
-#   "rule": "final",
-#   "rulePayload": "",
-#   "start": "2024-10-13T09:19:45.971965079Z",
-#   "upload": 3374
-# },
 
 
 class Store:
@@ -46,13 +22,24 @@ class Store:
 
     def process(self, data):
         for conn in data["connections"]:
-            self.db[conn["id"]] = conn
+            if conn["chains"][-1] == "proxy-out":
+                self.db[conn["id"]] = conn
         logging.info("len(db)=%d", len(self.db))
+
+
+is_running = True
+
+
+def on_sigint(signum, frame):
+    global is_running
+    is_running = False
+    ws.close()
 
 
 if __name__ == "__main__":
     store = Store(db_path="conn")
-    while True:
+    signal.signal(signal.SIGINT, on_sigint)
+    while is_running:
         ws = websocket.WebSocketApp(
             API_URI, on_message=lambda _, msg: store.process(json.loads(msg))
         )

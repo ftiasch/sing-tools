@@ -1,3 +1,5 @@
-prometheus-client
+dnspython
 python-dateutil
+requests
+typer
 websocket-client
