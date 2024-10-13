@@ -163,9 +163,9 @@ class Gen:
                             "192.168.1.221",
                         ]  # Mijia Cloud
                     ),
-                    route("ww", rule_set=rule_set(["geosite-youtube"])),
+                    # route("ww", rule_set=rule_set(["geosite-youtube"])),
                 ],
-                "final": PROXY_TAG,
+                "final": "direct-out",
                 "auto_detect_interface": True,
             },
             "inbounds": [
@@ -271,9 +271,7 @@ def main(
     download: bool = False,
     nameserver: str = DEFAULT_NAMESERVER,
     ipv6: bool = False,
-    provider_names: Annotated[
-        list[str], typer.Option("--provider", "-p")
-    ] = DEFAULT_PROVIDERS,
+    provider_names: Annotated[list[str], typer.Option("--provider", "-p")] = [],
     download_detour: Annotated[str, typer.Option("-dd")] = "direct-out",
     ghproxy: bool = True,
 ):
