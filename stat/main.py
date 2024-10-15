@@ -1,8 +1,11 @@
-import shelve
-import typer
-import pandas as pd
-import sys
+import datetime
 import json
+import shelve
+import sys
+
+import dateutil.parser
+import pandas as pd
+import typer
 
 app = typer.Typer(pretty_exceptions_enable=False)
 
@@ -15,12 +18,17 @@ def get_base_domain(domain: str) -> str:
 
 
 @app.command()
-def stat(*, db_path="conn"):
+def stat(*, db_path="conn", hours: int = 24):
     stat = []
+    from_start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        hours=hours
+    )
     with shelve.open(db_path, "r") as db:
         for conn in db.values():
             metadata = conn["metadata"]
             if conn["rule"].endswith("direct-out"):
+                continue
+            if dateutil.parser.isoparse(conn["start"]) < from_start:
                 continue
             host = metadata["host"]
             if host:
