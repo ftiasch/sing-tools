@@ -139,6 +139,7 @@ class Gen:
                                 "geosite-apple@cn",
                                 "geosite-cn",
                                 "geosite-icloudprivaterelay",
+                                "geosite-microsoft@cn",
                                 "geosite-private",
                             ]
                         ),
