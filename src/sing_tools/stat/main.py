@@ -7,6 +7,7 @@ import dateutil.parser
 import pandas as pd
 import typer
 
+
 app = typer.Typer(pretty_exceptions_enable=False)
 
 

@@ -1,0 +1,18 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools"]
+
+[project]
+name = "sing_tools"
+version = "0.0.1"
+dependencies = [
+    "dnspython",
+    "python-dateutil",
+    "requests",
+    "typer",
+    "websocket-client",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false

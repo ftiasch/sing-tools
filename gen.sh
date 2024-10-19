@@ -3,9 +3,7 @@ set -o errexit
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-. .env/bin/activate
-
-python cli.py $@
+python -m sing_tools.cli $@
 # sing-box check -c run/config.json
 
 rsync run/config.json marf-gw:/etc/sing-box

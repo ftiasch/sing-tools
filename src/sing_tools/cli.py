@@ -5,8 +5,8 @@ from typing import IO, Annotated, Any
 
 import typer
 
-from common import setup_logging
-from lib import BaseProvider, FilterResult, Parser
+from .common import setup_logging
+from .lib import BaseProvider, FilterResult, Parser
 
 
 class OkggProvider(BaseProvider):
@@ -136,6 +136,7 @@ class Gen:
                                 "geoip-cn",
                                 "geosite-adobe",
                                 "geosite-adobe-activation",
+                                "geosite-aliyun",
                                 "geosite-apple@cn",
                                 "geosite-cn",
                                 "geosite-icloudprivaterelay",
@@ -276,7 +277,6 @@ def main(
     download_detour: Annotated[str, typer.Option("-dd")] = "direct-out",
     ghproxy: bool = True,
 ):
-    os.chdir(os.path.dirname(__file__) or ".")
     setup_logging()
     os.makedirs("run", exist_ok=True)
 

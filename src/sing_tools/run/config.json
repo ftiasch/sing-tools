@@ -1,0 +1,232 @@
+{
+    "log": {
+        "level": "error",
+        "timestamp": true
+    },
+    "dns": {
+        "servers": [
+            {
+                "tag": "fakeip-dns",
+                "address": "fakeip"
+            },
+            {
+                "tag": "reject-dns",
+                "address": "rcode://refused"
+            },
+            {
+                "tag": "domestic-dns",
+                "address": "127.0.0.1:6053",
+                "strategy": "ipv4_only",
+                "detour": "direct-out"
+            }
+        ],
+        "rules": [
+            {
+                "outbound": "any",
+                "server": "domestic-dns"
+            },
+            {
+                "domain_suffix": [
+                    "bopufund.com",
+                    "ftiasch.xyz",
+                    "limao.tech"
+                ],
+                "rule_set": [
+                    "geosite-private"
+                ],
+                "server": "domestic-dns"
+            },
+            {
+                "query_type": [
+                    "A"
+                ],
+                "server": "fakeip-dns"
+            }
+        ],
+        "final": "reject-dns",
+        "fakeip": {
+            "enabled": true,
+            "inet4_range": "10.32.0.0/12"
+        },
+        "independent_cache": true
+    },
+    "route": {
+        "rule_set": [
+            {
+                "tag": "geosite-apple@cn",
+                "type": "remote",
+                "download_detour": "direct-out",
+                "update_interval": "1d",
+                "format": "binary",
+                "url": "https://ghp.ci/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-apple@cn.srs"
+            },
+            {
+                "tag": "geosite-microsoft@cn",
+                "type": "remote",
+                "download_detour": "direct-out",
+                "update_interval": "1d",
+                "format": "binary",
+                "url": "https://ghp.ci/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-microsoft@cn.srs"
+            },
+            {
+                "tag": "geosite-icloudprivaterelay",
+                "type": "remote",
+                "download_detour": "direct-out",
+                "update_interval": "1d",
+                "format": "binary",
+                "url": "https://ghp.ci/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-icloudprivaterelay.srs"
+            },
+            {
+                "tag": "geosite-cn",
+                "type": "remote",
+                "download_detour": "direct-out",
+                "update_interval": "1d",
+                "format": "binary",
+                "url": "https://ghp.ci/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs"
+            },
+            {
+                "tag": "geosite-adobe",
+                "type": "remote",
+                "download_detour": "direct-out",
+                "update_interval": "1d",
+                "format": "binary",
+                "url": "https://ghp.ci/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-adobe.srs"
+            },
+            {
+                "tag": "geosite-private",
+                "type": "remote",
+                "download_detour": "direct-out",
+                "update_interval": "1d",
+                "format": "binary",
+                "url": "https://ghp.ci/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-private.srs"
+            },
+            {
+                "tag": "geosite-adobe-activation",
+                "type": "remote",
+                "download_detour": "direct-out",
+                "update_interval": "1d",
+                "format": "binary",
+                "url": "https://ghp.ci/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-adobe-activation.srs"
+            },
+            {
+                "tag": "geoip-cn",
+                "type": "remote",
+                "download_detour": "direct-out",
+                "update_interval": "1d",
+                "format": "binary",
+                "url": "https://ghp.ci/https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs"
+            }
+        ],
+        "rules": [
+            {
+                "inbound": "dns-in",
+                "outbound": "dns-out"
+            },
+            {
+                "inbound": "http-direct-in",
+                "outbound": "direct-out"
+            },
+            {
+                "rule_set": [
+                    "geoip-cn",
+                    "geosite-adobe",
+                    "geosite-adobe-activation",
+                    "geosite-apple@cn",
+                    "geosite-cn",
+                    "geosite-icloudprivaterelay",
+                    "geosite-microsoft@cn",
+                    "geosite-private"
+                ],
+                "outbound": "direct-out"
+            },
+            {
+                "domain_suffix": [
+                    "courier.push.apple.com",
+                    "rss.okxyz.xyz",
+                    "steamcontent.com",
+                    "syncthing.net",
+                    "xdrtc.com"
+                ],
+                "outbound": "direct-out"
+            },
+            {
+                "port": [
+                    123
+                ],
+                "outbound": "direct-out"
+            },
+            {
+                "source_ip_cidr": [
+                    "192.168.1.120",
+                    "192.168.1.182",
+                    "192.168.1.183",
+                    "192.168.1.185",
+                    "192.168.1.215",
+                    "192.168.1.221"
+                ],
+                "outbound": "direct-out"
+            }
+        ],
+        "final": "proxy-out",
+        "auto_detect_interface": true
+    },
+    "inbounds": [
+        {
+            "type": "direct",
+            "tag": "dns-in",
+            "listen": "127.0.0.1",
+            "listen_port": 5353,
+            "network": "udp",
+            "override_address": "1.0.0.1",
+            "override_port": 53
+        },
+        {
+            "type": "tun",
+            "tag": "tun-in",
+            "address": [
+                "172.19.0.1/30"
+            ],
+            "auto_route": true,
+            "strict_route": false,
+            "stack": "system",
+            "sniff": true
+        },
+        {
+            "type": "http",
+            "tag": "http-in",
+            "listen": "::",
+            "listen_port": 8001
+        },
+        {
+            "type": "http",
+            "tag": "http-direct-in",
+            "listen": "::",
+            "listen_port": 8002
+        }
+    ],
+    "outbounds": [
+        {
+            "type": "direct",
+            "tag": "direct-out"
+        },
+        {
+            "type": "block",
+            "tag": "reject-out"
+        },
+        {
+            "type": "dns",
+            "tag": "dns-out"
+        }
+    ],
+    "experimental": {
+        "cache_file": {
+            "enabled": true,
+            "path": "cache.db",
+            "store_fakeip": true
+        },
+        "clash_api": {
+            "external_controller": "0.0.0.0:9090",
+            "external_ui": "/usr/share/yacd-meta"
+        }
+    }
+}

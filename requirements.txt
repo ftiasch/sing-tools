@@ -1,5 +1,0 @@
-dnspython
-python-dateutil
-requests
-typer
-websocket-client
