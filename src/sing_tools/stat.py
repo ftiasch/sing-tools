@@ -1,14 +1,37 @@
 import datetime
 import json
+import logging
+import os
 import shelve
+import signal
 import sys
 
 import dateutil.parser
 import pandas as pd
 import typer
+import websocket
 
+DEFAULT_DB_PATH = "conn"
 
 app = typer.Typer(pretty_exceptions_enable=False)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s|%(levelname)s|%(message)s",
+)
+
+
+class Store:
+    def __init__(self, db_path: str):
+        self.db = shelve.open(db_path, "c")
+
+    def __del__(self):
+        self.db.close()
+
+    def process(self, data):
+        for conn in data["connections"]:
+            self.db[conn["id"]] = conn
+        logging.info("len(db)=%d", len(self.db))
 
 
 def get_base_domain(domain: str) -> str:
@@ -18,8 +41,28 @@ def get_base_domain(domain: str) -> str:
     return ".".join(parts)
 
 
+is_running = True
+
+
 @app.command()
-def stat(*, db_path="conn", hours: int = 24):
+def collect(api_url: str, *, db_path=DEFAULT_DB_PATH):
+    def on_sigint(signum, frame):
+        global is_running
+        is_running = False
+        ws.close()
+
+    store = Store(db_path=db_path)
+    signal.signal(signal.SIGINT, on_sigint)
+    while is_running:
+        ws = websocket.WebSocketApp(
+            os.path.join(api_url, "connections"),
+            on_message=lambda _, msg: store.process(json.loads(msg)),
+        )
+        ws.run_forever()
+
+
+@app.command()
+def summary(*, db_path=DEFAULT_DB_PATH, hours: int = 24):
     stat = []
     from_start = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         hours=hours
@@ -51,7 +94,7 @@ def stat(*, db_path="conn", hours: int = 24):
 
 
 @app.command()
-def search(base_domain: str, *, db_path="conn"):
+def search(base_domain: str, *, db_path=DEFAULT_DB_PATH):
     result = []
     with shelve.open(db_path, "r") as db:
         for conn in db.values():
