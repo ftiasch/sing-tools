@@ -137,7 +137,7 @@ class Gen:
                                 "geosite-adobe",
                                 "geosite-adobe-activation",
                                 "geosite-aliyun",
-                                "geosite-apple@cn",
+                                "geosite-apple",
                                 "geosite-cn",
                                 "geosite-icloudprivaterelay",
                                 "geosite-microsoft@cn",
@@ -147,11 +147,15 @@ class Gen:
                     ),
                     route_direct(
                         domain_suffix=[
+                            "cloudvdn.com",  # huya
                             "courier.push.apple.com",
+                            "ppio.cloud",
                             "rss.okxyz.xyz",
                             "steamcontent.com",
                             "syncthing.net",
                             "xdrtc.com",
+                            "xiaoyuzhoufm.com",  # 小宇宙
+                            "xyzcdn.net",  # 小宇宙
                         ]
                     ),
                     route_direct(port=[123]),
