@@ -100,7 +100,6 @@ class Gen:
             "log": {"level": "error", "timestamp": True},
             "dns": {
                 "servers": [
-                    # {"tag": "fakeip-dns", "address": "fakeip"},
                     {"tag": "reject-dns", "address": "rcode://refused"},
                     {
                         "tag": "domestic-dns",
@@ -117,22 +116,12 @@ class Gen:
                 ],
                 "rules": [
                     {"outbound": "any", "server": "domestic-dns"},
-                    dict(
-                        rule_set=rule_set(["geosite-geolocation-!cn"]),
-                        server="oversea-dns",
-                    ),
-                    # {
-                    #     "domain_suffix": direct_domains,
-                    #     "rule_set": rule_set(["geosite-private"]),
-                    #     "server": "domestic-dns",
-                    # },
-                    # {"query_type": ["A"], "server": "fakeip-dns"},
+                    {
+                        "rule_set": rule_set(["geosite-geolocation-cn"]),
+                        "server": "domestic-dns",
+                    },
                 ],
-                "final": "domestic-dns",
-                # "fakeip": {
-                #     "enabled": True,
-                #     "inet4_range": "10.32.0.0/12",
-                # },
+                "final": "oversea-dns",
                 "independent_cache": True,
             },
             "route": {
@@ -140,6 +129,7 @@ class Gen:
                 "rules": [
                     route("dns-out", inbound="dns-in"),
                     route_direct(inbound="http-direct-in"),
+                    route_direct(ip_is_private=True),
                     route_direct(
                         rule_set=rule_set(
                             [
@@ -149,25 +139,23 @@ class Gen:
                                 "geosite-aliyun",
                                 "geosite-apple",
                                 "geosite-cn",
-                                "geosite-icloudprivaterelay",
                                 "geosite-microsoft@cn",
-                                "geosite-private",
                             ]
                         ),
                     ),
-                    route_direct(
-                        domain_suffix=[
-                            "cloudvdn.com",  # huya
-                            "courier.push.apple.com",
-                            "ppio.cloud",
-                            "rss.okxyz.xyz",
-                            "steamcontent.com",
-                            "syncthing.net",
-                            "xdrtc.com",
-                            "xiaoyuzhoufm.com",  # 小宇宙
-                            "xyzcdn.net",  # 小宇宙
-                        ]
-                    ),
+                    # route_direct(
+                    #     domain_suffix=[
+                    #         "cloudvdn.com",  # huya
+                    #         "courier.push.apple.com",
+                    #         "ppio.cloud",
+                    #         "rss.okxyz.xyz",
+                    #         "steamcontent.com",
+                    #         "syncthing.net",
+                    #         "xdrtc.com",
+                    #         "xiaoyuzhoufm.com",  # 小宇宙
+                    #         "xyzcdn.net",  # 小宇宙
+                    #     ]
+                    # ),
                     route_direct(port=[123]),
                     route_direct(
                         source_ip_cidr=[
@@ -179,9 +167,8 @@ class Gen:
                             "192.168.1.221",
                         ]  # Mijia Cloud
                     ),
-                    route("ww", rule_set=rule_set(["geosite-youtube"])),
                 ],
-                "final": PROXY_TAG,
+                "final": "proxy-out",
                 "auto_detect_interface": True,
             },
             "inbounds": [
