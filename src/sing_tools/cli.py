@@ -100,7 +100,7 @@ class Gen:
             "log": {"level": "error", "timestamp": True},
             "dns": {
                 "servers": [
-                    {"tag": "fakeip-dns", "address": "fakeip"},
+                    # {"tag": "fakeip-dns", "address": "fakeip"},
                     {"tag": "reject-dns", "address": "rcode://refused"},
                     {
                         "tag": "domestic-dns",
@@ -108,21 +108,31 @@ class Gen:
                         "strategy": "ipv4_only",
                         "detour": "direct-out",
                     },
+                    {
+                        "tag": "oversea-dns",
+                        "address": "tls://8.8.8.8",
+                        "strategy": "ipv4_only",
+                        "detour": "proxy-out",
+                    },
                 ],
                 "rules": [
                     {"outbound": "any", "server": "domestic-dns"},
-                    {
-                        "domain_suffix": direct_domains,
-                        "rule_set": rule_set(["geosite-private"]),
-                        "server": "domestic-dns",
-                    },
-                    {"query_type": ["A"], "server": "fakeip-dns"},
+                    dict(
+                        rule_set=rule_set(["geosite-geolocation-!cn"]),
+                        server="oversea-dns",
+                    ),
+                    # {
+                    #     "domain_suffix": direct_domains,
+                    #     "rule_set": rule_set(["geosite-private"]),
+                    #     "server": "domestic-dns",
+                    # },
+                    # {"query_type": ["A"], "server": "fakeip-dns"},
                 ],
-                "final": "reject-dns",
-                "fakeip": {
-                    "enabled": True,
-                    "inet4_range": "10.32.0.0/12",
-                },
+                "final": "domestic-dns",
+                # "fakeip": {
+                #     "enabled": True,
+                #     "inet4_range": "10.32.0.0/12",
+                # },
                 "independent_cache": True,
             },
             "route": {
@@ -169,7 +179,7 @@ class Gen:
                             "192.168.1.221",
                         ]  # Mijia Cloud
                     ),
-                    # route("ww", rule_set=rule_set(["geosite-youtube"])),
+                    route("ww", rule_set=rule_set(["geosite-youtube"])),
                 ],
                 "final": PROXY_TAG,
                 "auto_detect_interface": True,
