@@ -136,10 +136,8 @@ class Gen:
                                 "geoip-cn",
                                 "geosite-adobe",
                                 "geosite-adobe-activation",
-                                "geosite-aliyun",
                                 "geosite-apple",
                                 "geosite-cn",
-                                "geosite-microsoft@cn",
                             ]
                         ),
                     ),
