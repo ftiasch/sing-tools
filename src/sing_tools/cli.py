@@ -90,11 +90,16 @@ class Gen:
         def route_direct(**kwargs) -> dict:
             return route("direct-out", **kwargs)
 
-        direct_domains = [
-            "bopufund.com",
-            "ftiasch.xyz",
-            "limao.tech",
-        ]
+        ensure_proxy = rule_set(["geosite-google"])
+        ensure_direct = rule_set(
+            [
+                "geosite-adobe",
+                "geosite-adobe-activation",
+                "geosite-apple",
+                "geosite-cn",
+                "geosite-steam",
+            ]
+        )
 
         self.config = {
             "log": {"level": "error", "timestamp": True},
@@ -117,7 +122,11 @@ class Gen:
                 "rules": [
                     {"outbound": "any", "server": "domestic-dns"},
                     {
-                        "rule_set": rule_set(["geosite-geolocation-cn"]),
+                        "rule_set": ensure_proxy,
+                        "server": "oversea-dns",
+                    },
+                    {
+                        "rule_set": ensure_direct,
                         "server": "domestic-dns",
                     },
                 ],
@@ -130,17 +139,8 @@ class Gen:
                     route("dns-out", inbound="dns-in"),
                     route_direct(inbound="http-direct-in"),
                     route_direct(ip_is_private=True),
-                    route_direct(
-                        rule_set=rule_set(
-                            [
-                                "geoip-cn",
-                                "geosite-adobe",
-                                "geosite-adobe-activation",
-                                "geosite-apple",
-                                "geosite-cn",
-                            ]
-                        ),
-                    ),
+                    route(PROXY_TAG, rule_set=ensure_proxy),
+                    route_direct(rule_set=rule_set(["geoip-cn"]) + ensure_direct),
                     # route_direct(
                     #     domain_suffix=[
                     #         "cloudvdn.com",  # huya
