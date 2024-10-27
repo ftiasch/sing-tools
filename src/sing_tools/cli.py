@@ -90,13 +90,14 @@ class Gen:
         def route_direct(**kwargs) -> dict:
             return route("direct-out", **kwargs)
 
-        ensure_proxy = rule_set(["geosite-google"])
+        ensure_proxy = rule_set(["geosite-bing", "geosite-github"])
         ensure_direct = rule_set(
             [
                 "geosite-adobe",
                 "geosite-adobe-activation",
                 "geosite-apple",
-                "geosite-cn",
+                "geosite-geolocation-cn",
+                "geosite-microsoft",
                 "geosite-steam",
             ]
         )
@@ -113,6 +114,12 @@ class Gen:
                         "detour": "direct-out",
                     },
                     {
+                        "tag": "lan-dns",
+                        "address": "127.0.0.1:54",
+                        "strategy": "ipv4_only",
+                        "detour": "direct-out",
+                    },
+                    {
                         "tag": "oversea-dns",
                         "address": "tls://8.8.8.8",
                         "strategy": "ipv4_only",
@@ -121,6 +128,10 @@ class Gen:
                 ],
                 "rules": [
                     {"outbound": "any", "server": "domestic-dns"},
+                    {
+                        "domain_suffix": ["lan"],
+                        "server": "lan-dns",
+                    },
                     {
                         "rule_set": ensure_proxy,
                         "server": "oversea-dns",
@@ -173,8 +184,8 @@ class Gen:
                 {
                     "type": "direct",
                     "tag": "dns-in",
-                    "listen": "127.0.0.1",
-                    "listen_port": 5353,
+                    "listen": "0.0.0.0",
+                    "listen_port": 53,
                     "network": "udp",
                     "override_address": "1.0.0.1",
                     "override_port": 53,
