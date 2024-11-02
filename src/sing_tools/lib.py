@@ -1,4 +1,5 @@
 import base64
+from copy import deepcopy
 import logging
 import re
 from collections import defaultdict
@@ -307,3 +308,122 @@ class Parser:
             )
 
         return outbounds
+
+
+class BaseGen:
+    parser: Parser
+    download_detour: str
+    ghproxy: bool
+    rule_sets: set[str]
+    config: dict
+
+    def __init__(self, parser: Parser, download_detour: str, ghproxy: bool) -> None:
+        self.parser = parser
+        self.download_detour = download_detour
+        self.ghproxy = ghproxy
+        self.rule_sets = set()
+        self.config = {
+            "log": {"level": "error", "timestamp": True},
+            "dns": {
+                "servers": [
+                    {"tag": "reject-dns", "address": "rcode://refused"},
+                ],
+                "rules": [
+                    {"outbound": "any", "server": "domestic-dns"},
+                ],
+                "independent_cache": True,
+            },
+            "route": {
+                "rule_set": None,
+                "rules": [
+                    {"outbound": "dns-out", "inbound": "dns-in"},
+                    {"outbound": "direct-out", "inbound": "http-direct-in"},
+                    {"outbound": "direct-out", "ip_is_private": True},
+                ],
+                # "final": "proxy-out",
+                "auto_detect_interface": True,
+            },
+            "inbounds": [
+                {
+                    "type": "direct",
+                    "tag": "dns-in",
+                    "listen": "0.0.0.0",
+                    "listen_port": 53,
+                    "network": "udp",
+                    "override_address": "1.0.0.1",
+                    "override_port": 53,
+                },
+                {
+                    "type": "tun",
+                    "tag": "tun-in",
+                    # "mtu": 1492,
+                    # "gso": True,
+                    "address": ["172.19.0.1/30"],
+                    "auto_route": True,
+                    "strict_route": False,
+                    "stack": "system",
+                    "sniff": True,
+                },
+                {"type": "http", "tag": "http-in", "listen": "::", "listen_port": 8001},
+                {
+                    "type": "http",
+                    "tag": "http-direct-in",
+                    "listen": "::",
+                    "listen_port": 8002,
+                },
+            ],
+            "outbounds": None,
+            "experimental": {
+                "cache_file": {
+                    "enabled": True,
+                    "path": "cache.db",
+                    "store_fakeip": True,
+                },
+                "clash_api": {
+                    "external_controller": "0.0.0.0:9090",
+                    "external_ui": "/usr/share/yacd-meta",
+                },
+            },
+        }
+
+    def get_config(self) -> dict:
+        config = deepcopy(self.config)
+        config["outbounds"] = self.get_outbounds()
+        config["route"]["rule_set"] = self.get_rule_sets()
+        return config
+
+    def get_outbounds(self) -> list[dict]:
+        return [
+            {"type": "direct", "tag": "direct-out"},
+            {"type": "block", "tag": "reject-out"},
+            {"type": "dns", "tag": "dns-out"},
+        ] + self.parser.get_outbounds()
+
+    def proxy_url(self, u: str) -> str:
+        return "https://ghp.ci/" + u if self.ghproxy else u
+
+    def get_rule_set_url(self, r: str) -> str:
+        if r.startswith("geoip"):
+            url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
+        else:
+            url = f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{r}.srs"
+        return self.proxy_url(url)
+
+    def get_rule_sets(self) -> list[dict]:
+        result = []
+        for r in self.rule_sets:
+            result.append(
+                {
+                    "tag": r,
+                    "type": "remote",
+                    "download_detour": self.download_detour,
+                    "update_interval": "1d",
+                    "format": "binary",
+                    "url": self.get_rule_set_url(r),
+                }
+            )
+        return result
+
+    def rule_set(self, name: str) -> str:
+        self.rule_sets.add(name)
+        return name
