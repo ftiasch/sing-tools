@@ -329,7 +329,7 @@ class BaseGen:
                     {"tag": "reject-dns", "address": "rcode://refused"},
                 ],
                 "rules": [
-                    {"outbound": "any", "server": "domestic-dns"},
+                    {"server": "direct-dns", "outbound": "any"},
                 ],
                 "independent_cache": True,
             },
@@ -386,6 +386,10 @@ class BaseGen:
             },
         }
 
+    @property
+    def valid_tags(self) -> set[str]:
+        return self.__parser.tags
+
     def __get_outbounds(self) -> list[dict]:
         return [
             {"type": "direct", "tag": "direct-out"},
@@ -415,14 +419,11 @@ class BaseGen:
             )
         return result
 
-    def has_tag(self, tag: str) -> bool:
-        return tag in self.__parser.tags
-
     def rule_set(self, name: str) -> str:
         self.__rule_sets.add(name)
         return name
 
-    def rule_sets(self, names: str) -> str:
+    def rule_sets(self, names: list[str]) -> list[str]:
         for name in names:
             self.rule_set(name)
         return names

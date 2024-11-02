@@ -61,76 +61,89 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
     return providers
 
 
+class DomainRules:
+    valid_tags: set[str]
+    tags: set[str]
+    rules: list[tuple[str, dict[str, Any]]]
+
+    def __init__(self, valid_tags: set[str]):
+        self.valid_tags = valid_tags
+        self.tags = set()
+        self.rules = []
+
+    def add(self, tag: str, **kwargs):
+        if tag == "direct" or (tag + "-out") in self.valid_tags:
+            self.tags.add(tag)
+            self.rules.append((tag, kwargs))
+
+    @property
+    def dns_servers(self):
+        for tag in self.tags:
+            yield {
+                "tag": tag + "-dns",
+                "address": "127.0.0.1:6053" if tag == "direct" else "tls://8.8.8.8",
+                "strategy": "ipv4_only",
+                "detour": tag + "-out",
+            }
+
+    @property
+    def dns_rules(self):
+        for tag, rule in self.rules:
+            yield {"server": tag + "-dns", **rule}
+
+    @property
+    def route_rules(self):
+        for tag, rule in self.rules:
+            yield {"outbound": tag + "-out", **rule}
+
+
 class Gen(BaseGen):
     def override(self):
-        ensure_proxy = [self.rule_set("geosite-bing"), self.rule_set("geosite-github")]
-        ensure_direct = [
-            self.rule_set("geosite-adobe"),
-            self.rule_set("geosite-adobe-activation"),
-            self.rule_set("geosite-apple"),
-            self.rule_set("geosite-geolocation-cn"),
-            self.rule_set("geosite-microsoft"),
-            self.rule_set("geosite-steam"),
-        ]
+        dr = DomainRules(self.valid_tags)
+        dr.add("gpt", rule_set=self.rule_set("geosite-openai"))
+        dr.add("video", rule_set=self.rule_set("geosite-youtube"))
+        dr.add("proxy", rule_set=self.rule_sets(["geosite-bing", "geosite-github"]))
+        dr.add(
+            "direct",
+            rule_set=self.rule_sets(
+                [
+                    "geosite-adobe",
+                    "geosite-adobe-activation",
+                    "geosite-apple",
+                    "geosite-geolocation-cn",
+                    "geosite-microsoft",
+                    "geosite-steam",
+                ]
+            ),
+        )
         self.config["dns"]["servers"].extend(
             [
-                {
-                    "tag": "domestic-dns",
-                    "address": "127.0.0.1:6053",
-                    "strategy": "ipv4_only",
-                    "detour": "direct-out",
-                },
                 {
                     "tag": "lan-dns",
                     "address": "127.0.0.1:54",
                     "strategy": "ipv4_only",
                     "detour": "direct-out",
                 },
-                {
-                    "tag": "oversea-dns",
-                    "address": "tls://8.8.8.8",
-                    "strategy": "ipv4_only",
-                    "detour": "proxy-out",
-                },
             ]
         )
+        self.config["dns"]["servers"].extend(dr.dns_servers)
         self.config["dns"]["rules"].extend(
             [
                 {
-                    "domain_suffix": ["lan"],
                     "server": "lan-dns",
-                },
-                {
-                    "rule_set": ensure_proxy,
-                    "server": "oversea-dns",
-                },
-                {
-                    "rule_set": ensure_direct,
-                    "server": "domestic-dns",
+                    "domain_suffix": ["lan"],
                 },
             ]
         )
-        self.config["dns"]["final"] = "oversea-dns"
-        if "gpt-out" in self.__parser.tags:
-            self.config["route"]["rules"].append(
-                {"outbound": "gpt-out", "rule_set": [self.rule_set("geosite-openai")]}
-            )
-        if "video-out" in self.__parser.tags:
-            self.config["route"]["rules"].append(
-                {
-                    "outbound": "video-out",
-                    "rule_set": [self.rule_set("geosite-youtube")],
-                }
-            )
+        self.config["dns"]["rules"].extend(dr.dns_rules)
+        self.config["dns"]["final"] = "proxy-dns"
+
+        self.config["route"]["rules"].extend(dr.route_rules)
         self.config["route"]["rules"].extend(
             [
                 {
-                    "outbound": "proxy-out",
-                    "rule_set": ensure_proxy,
-                },
-                {
                     "outbound": "direct-out",
-                    "rule_set": [self.rule_set("geoip-cn")] + ensure_direct,
+                    "rule_set": self.rule_set("geoip-cn"),
                 },
                 {"outbound": "direct-out", "port": [123]},
                 {
