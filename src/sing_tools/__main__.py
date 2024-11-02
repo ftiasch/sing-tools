@@ -16,10 +16,10 @@ class OkggProvider(BaseProvider):
     def filter(self, proto: str, name: str) -> FilterResult:
         if proto == "ss":
             return []
-        region = BaseProvider.guess_region(name)
-        if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
-            return []
-        return [["proxy-out", self.name]]
+        # region = BaseProvider.guess_region(name)
+        # if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
+        #     return []
+        return [["proxy-out", self.name], ["gpt-out"], ["video-out"]]
 
 
 class WwProvider(BaseProvider):
@@ -27,11 +27,9 @@ class WwProvider(BaseProvider):
         super().__init__("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
     def filter(self, proto: str, name: str) -> FilterResult:
-        if "游戏" in name:
-            return []
-        region = BaseProvider.guess_region(name.split("·")[1])
-        if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
-            return []
+        # region = BaseProvider.guess_region(name.split("·")[1])
+        # if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
+        #     return []
         tags = [["proxy-out", self.name]]
         if "GPT" in name:
             tags.append(["gpt-out"])
@@ -46,6 +44,12 @@ class SsrDogProvider(BaseProvider):
             "ssrdog",
             "https://no1-svip.api-baobaog.rest/s?t=75c680c64ec9ab655585fe6712da4fe2",
         )
+
+    def filter(self, proto: str, name: str) -> FilterResult:
+        # region = BaseProvider.guess_region(name.split("·")[1])
+        # if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
+        #     return []
+        return [["proxy-out", self.name], ["gpt-out"]]
 
 
 def get_providers(names: list[str]) -> list[BaseProvider]:
@@ -125,22 +129,26 @@ class Gen(BaseGen):
                     "detour": "direct-out",
                 },
             ]
+            + list(dr.dns_servers)
         )
-        self.config["dns"]["servers"].extend(dr.dns_servers)
         self.config["dns"]["rules"].extend(
             [
                 {
                     "server": "lan-dns",
                     "domain_suffix": ["lan"],
                 },
+                {
+                    "server": "reject-dns",
+                    "rule_set": self.rule_set("geosite-category-ads"),
+                },
             ]
+            + list(dr.dns_rules)
         )
-        self.config["dns"]["rules"].extend(dr.dns_rules)
         self.config["dns"]["final"] = "proxy-dns"
 
-        self.config["route"]["rules"].extend(dr.route_rules)
         self.config["route"]["rules"].extend(
-            [
+            list(dr.route_rules)
+            + [
                 {
                     "outbound": "direct-out",
                     "rule_set": self.rule_set("geoip-cn"),
