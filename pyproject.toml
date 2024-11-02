@@ -16,3 +16,6 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["src"]
 namespaces = false
+
+[tool.pyright]
+includes = ["src"]

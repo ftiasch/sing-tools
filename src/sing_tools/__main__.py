@@ -111,11 +111,11 @@ class Gen(BaseGen):
             ]
         )
         self.config["dns"]["final"] = "oversea-dns"
-        if "gpt-out" in self.parser.tags:
+        if "gpt-out" in self.__parser.tags:
             self.config["route"]["rules"].append(
                 {"outbound": "gpt-out", "rule_set": [self.rule_set("geosite-openai")]}
             )
-        if "video-out" in self.parser.tags:
+        if "video-out" in self.__parser.tags:
             self.config["route"]["rules"].append(
                 {
                     "outbound": "video-out",

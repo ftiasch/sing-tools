@@ -311,17 +311,17 @@ class Parser:
 
 
 class BaseGen:
-    parser: Parser
-    download_detour: str
-    ghproxy: bool
-    rule_sets: set[str]
+    __parser: Parser
+    __download_detour: str
+    __ghproxy: bool
+    __rule_sets: set[str]
     config: dict
 
     def __init__(self, parser: Parser, download_detour: str, ghproxy: bool) -> None:
-        self.parser = parser
-        self.download_detour = download_detour
-        self.ghproxy = ghproxy
-        self.rule_sets = set()
+        self.__parser = parser
+        self.__download_detour = download_detour
+        self.__ghproxy = ghproxy
+        self.__rule_sets = set()
         self.config = {
             "log": {"level": "error", "timestamp": True},
             "dns": {
@@ -386,44 +386,49 @@ class BaseGen:
             },
         }
 
-    def get_config(self) -> dict:
-        config = deepcopy(self.config)
-        config["outbounds"] = self.get_outbounds()
-        config["route"]["rule_set"] = self.get_rule_sets()
-        return config
-
-    def get_outbounds(self) -> list[dict]:
+    def __get_outbounds(self) -> list[dict]:
         return [
             {"type": "direct", "tag": "direct-out"},
             {"type": "block", "tag": "reject-out"},
             {"type": "dns", "tag": "dns-out"},
-        ] + self.parser.get_outbounds()
+        ] + self.__parser.get_outbounds()
 
-    def proxy_url(self, u: str) -> str:
-        return "https://ghp.ci/" + u if self.ghproxy else u
-
-    def get_rule_set_url(self, r: str) -> str:
+    def __get_rule_set_url(self, r: str) -> str:
         if r.startswith("geoip"):
             url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
         else:
             url = f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{r}.srs"
-        return self.proxy_url(url)
+        return "https://ghp.ci/" + url if self.__ghproxy else url
 
-    def get_rule_sets(self) -> list[dict]:
+    def __get_rule_sets(self) -> list[dict]:
         result = []
-        for r in self.rule_sets:
+        for r in self.__rule_sets:
             result.append(
                 {
                     "tag": r,
                     "type": "remote",
-                    "download_detour": self.download_detour,
+                    "download_detour": self.__download_detour,
                     "update_interval": "1d",
                     "format": "binary",
-                    "url": self.get_rule_set_url(r),
+                    "url": self.__get_rule_set_url(r),
                 }
             )
         return result
 
+    def has_tag(self, tag: str) -> bool:
+        return tag in self.__parser.tags
+
     def rule_set(self, name: str) -> str:
-        self.rule_sets.add(name)
+        self.__rule_sets.add(name)
         return name
+
+    def rule_sets(self, names: str) -> str:
+        for name in names:
+            self.rule_set(name)
+        return names
+
+    def get_config(self) -> dict:
+        config = deepcopy(self.config)
+        config["outbounds"] = self.__get_outbounds()
+        config["route"]["rule_set"] = self.__get_rule_sets()
+        return config
