@@ -73,11 +73,11 @@ class BaseProvider:
                     return region
         return "N/A"
 
-    def filter(self, proxy_tag: str, proto: str, name: str) -> FilterResult:
+    def filter(self, proto: str, name: str) -> FilterResult:
         region = BaseProvider.guess_region(name)
         if region not in ("US", "HK", "JP", "SG", "TW", "TH", "PH"):
             return []
-        return [[proxy_tag, self.name]]
+        return [["proxy-out", self.name]]
 
     def download(self) -> None:
         name, url = self.name, self.url
@@ -97,22 +97,22 @@ class Parser:
     proxy_tag: str
     resolver: dns.resolver.Resolver
     outbounds: list[tuple[list[list[str]], dict]]
+    tags: set[str]
 
     def __init__(
         self,
         *,
         nameserver: Optional[str | dns.nameserver.Nameserver] = None,
         ipv6=False,
-        proxy_tag: str,
     ):
         self.nameserver = nameserver
         self.ipv6 = ipv6
-        self.proxy_tag = proxy_tag
         self.resolver = dns.resolver.Resolver()
         if self.nameserver is not None:
             self.resolver.nameservers = [self.nameserver]
         self.outbounds = []
         self.groups = {}
+        self.tags = set()
 
     def __resolve(self, host: str) -> Optional[str]:
         if self.nameserver is None or _is_valid_ip(host):
@@ -167,8 +167,10 @@ class Parser:
 
     def parse(self, provider: BaseProvider):
         def try_add(fragment, proto, outbound):
-            paths = provider.filter(self.proxy_tag, proto, fragment)
+            paths = provider.filter(proto, fragment)
             if paths:
+                for path in paths:
+                    self.tags.add(path[0])
                 outbound["tag"] = self.__get_tag(fragment)
                 self.outbounds.append((paths, outbound))
             else:

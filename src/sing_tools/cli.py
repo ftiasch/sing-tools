@@ -13,26 +13,26 @@ class OkggProvider(BaseProvider):
     def __init__(self):
         super().__init__("okgg", "https://rss.okxyz.xyz/link/nPsuuOMh6xq1lyS5?mu=2")
 
-    def filter(self, proxy_tag: str, proto: str, name: str) -> FilterResult:
+    def filter(self, proto: str, name: str) -> FilterResult:
         if proto == "ss":
             return []
         region = BaseProvider.guess_region(name)
         if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
             return []
-        return [[proxy_tag, self.name]]
+        return [["proxy-out", self.name]]
 
 
 class WwProvider(BaseProvider):
     def __init__(self):
         super().__init__("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
-    def filter(self, proxy_tag: str, proto: str, name: str) -> FilterResult:
+    def filter(self, proto: str, name: str) -> FilterResult:
         if "游戏" in name:
             return []
         region = BaseProvider.guess_region(name.split("·")[1])
         if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
             return []
-        tags = [[proxy_tag, self.name]]
+        tags = [["proxy-out", self.name]]
         if "GPT" in name:
             tags.append(["gpt-out"])
         if "流媒体" in name:
@@ -282,7 +282,7 @@ def main(
     nameserver: str = DEFAULT_NAMESERVER,
     ipv6: bool = False,
     provider_names: Annotated[list[str], typer.Option("--provider", "-p")] = [],
-    download_detour: Annotated[str, typer.Option("-dd")] = "direct-out",
+    download_detour: Annotated[str, typer.Option("--dd")] = "direct-out",
     ghproxy: bool = True,
 ):
     setup_logging()
@@ -294,7 +294,7 @@ def main(
         for p in providers:
             p.download()
 
-    parser = Parser(nameserver=nameserver, ipv6=ipv6, proxy_tag="proxy-out")
+    parser = Parser(nameserver=nameserver, ipv6=ipv6)
     for p in providers:
         parser.parse(p)
     with open("run/outbounds.json", "w") as f:
