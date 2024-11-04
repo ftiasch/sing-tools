@@ -27,15 +27,13 @@ class WwProvider(BaseProvider):
         super().__init__("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
     def filter(self, proto: str, name: str) -> FilterResult:
-        # region = BaseProvider.guess_region(name.split("·")[1])
-        # if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
-        #     return []
-        tags = [["proxy-out", self.name]]
+        if "游戏" in name:
+            return [["game-out"]]
         if "GPT" in name:
-            tags.append(["gpt-out"])
+            return [["gpt-out"]]
         if "流媒体" in name:
-            tags.append(["video-out"])
-        return tags
+            return [["video-out"]]
+        return [["proxy-out", self.name]]
 
 
 class SsrDogProvider(BaseProvider):
@@ -46,9 +44,6 @@ class SsrDogProvider(BaseProvider):
         )
 
     def filter(self, proto: str, name: str) -> FilterResult:
-        # region = BaseProvider.guess_region(name.split("·")[1])
-        # if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
-        #     return []
         return [["proxy-out", self.name], ["gpt-out"]]
 
 
@@ -116,10 +111,11 @@ class Gen(BaseGen):
                     "geosite-apple",
                     "geosite-geolocation-cn",
                     "geosite-microsoft",
-                    "geosite-steam",
+                    "geosite-steam@cn",
                 ]
             ),
         )
+        dr.add("game", rule_set=self.rule_set("geosite-steam"))
         self.config["dns"]["servers"].extend(
             [
                 {
