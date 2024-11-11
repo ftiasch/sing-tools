@@ -9,6 +9,7 @@ dependencies = [
     "dnspython",
     "python-dateutil",
     "requests",
+    "ruff",
     "typer",
     "websocket-client",
 ]
@@ -17,5 +18,8 @@ dependencies = [
 where = ["src"]
 namespaces = false
 
-[tool.pyright]
-includes = ["src"]
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "PGH"]
+ignore = [
+  "E501" # Line too long
+]

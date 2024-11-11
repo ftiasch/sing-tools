@@ -1,10 +1,10 @@
 import base64
-from copy import deepcopy
 import logging
 import re
 from collections import defaultdict
-from typing import Optional, TypeAlias, Tuple
-from urllib.parse import parse_qs, unquote, urlparse, ParseResult
+from copy import deepcopy
+from typing import Optional, Tuple, TypeAlias
+from urllib.parse import ParseResult, parse_qs, unquote, urlparse
 
 import dns.exception
 import dns.nameserver
@@ -137,7 +137,7 @@ class Parser:
                     )
                 else:
                     return None
-            answer = answers[0].to_text()  # type: ignore
+            answer = answers[0].to_text()
             logging.info("DNS answer|%s", answer)
             return answer
         except dns.exception.DNSException:

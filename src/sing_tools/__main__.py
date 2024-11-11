@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import os
-from typing import IO, Annotated, Any
+from typing import IO, Annotated, Any, override
 
 import typer
 
@@ -13,19 +13,24 @@ class OkggProvider(BaseProvider):
     def __init__(self):
         super().__init__("okgg", "https://rss.okxyz.xyz/link/nPsuuOMh6xq1lyS5?mu=2")
 
+    @override
     def filter(self, proto: str, name: str) -> FilterResult:
         if proto == "ss":
             return []
-        # region = BaseProvider.guess_region(name)
+        tags = [["proxy-out", self.name], ["video-out"]]
+        if BaseProvider.guess_region(name) not in ("HK",):
+            tags.append(["gpt-out"])
+        return tags
+
         # if region not in ("US", "HK", "JP", "SG", "TW", "ID", "TH", "PH"):
         #     return []
-        return [["proxy-out", self.name], ["gpt-out"], ["video-out"]]
 
 
 class WwProvider(BaseProvider):
     def __init__(self):
         super().__init__("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
 
+    @override
     def filter(self, proto: str, name: str) -> FilterResult:
         if "游戏" in name:
             return [["game-out"]]
@@ -43,12 +48,16 @@ class SsrDogProvider(BaseProvider):
             "https://no1-svip.api-baobaog.rest/s?t=75c680c64ec9ab655585fe6712da4fe2",
         )
 
+    @override
     def filter(self, proto: str, name: str) -> FilterResult:
-        return [["proxy-out", self.name], ["gpt-out"]]
+        tags = [["proxy-out", self.name]]
+        if BaseProvider.guess_region(name) not in ("HK",):
+            tags.append(["gpt-out"])
+        return tags
 
 
 def get_providers(names: list[str]) -> list[BaseProvider]:
-    providers = []
+    providers: list[BaseProvider] = []
     for name in names:
         match name:
             case "okgg":
@@ -57,6 +66,8 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
                 providers.append(WwProvider())
             case "ssrdog":
                 providers.append(SsrDogProvider())
+            case _:
+                pass
     return providers
 
 
@@ -100,6 +111,7 @@ class Gen(BaseGen):
     def override(self):
         dr = DomainRules(self.valid_tags)
         dr.add("gpt", rule_set=self.rule_set("geosite-openai"))
+        dr.add("gpt", domain_suffix=["perplexity.ai"])
         dr.add("video", rule_set=self.rule_set("geosite-youtube"))
         dr.add("proxy", rule_set=self.rule_sets(["geosite-bing", "geosite-github"]))
         dr.add(
@@ -154,9 +166,14 @@ class Gen(BaseGen):
                     "outbound": "direct-out",
                     "source_ip_cidr": [
                         "192.168.1.120",
+                        "192.168.1.129",
+                        "192.168.1.136",
+                        "192.168.1.154",
                         "192.168.1.182",
                         "192.168.1.183",
+                        "192.168.1.184",
                         "192.168.1.185",
+                        "192.168.1.205",
                         "192.168.1.215",
                         "192.168.1.221",
                     ],  # Mijia Cloud
@@ -182,14 +199,14 @@ def main(
     download: bool = False,
     nameserver: str = DEFAULT_NAMESERVER,
     ipv6: bool = False,
-    provider_names: Annotated[list[str], typer.Option("--provider", "-p")] = [],
+    provider_names: Annotated[list[str] | None, typer.Option("--provider", "-p")],
     download_detour: Annotated[str, typer.Option("--dd")] = "direct-out",
     ghproxy: bool = True,
 ):
     setup_logging()
     os.makedirs("run", exist_ok=True)
 
-    providers = get_providers(provider_names)
+    providers = get_providers(provider_names or [])
 
     if download:
         for p in providers:
