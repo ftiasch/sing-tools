@@ -17,7 +17,7 @@ class OkggProvider(BaseProvider):
     def filter(self, proto: str, name: str) -> FilterResult:
         if proto == "ss":
             return []
-        tags = [["proxy-out", self.name], ["video-out"]]
+        tags = [["proxy-out", self.name], ["video-out"], ["game-out"]]
         if BaseProvider.guess_region(name) not in ("HK",):
             tags.append(["gpt-out"])
         return tags
@@ -32,13 +32,11 @@ class WwProvider(BaseProvider):
 
     @override
     def filter(self, proto: str, name: str) -> FilterResult:
-        if "游戏" in name:
-            return [["game-out"]]
         if "GPT" in name:
             return [["gpt-out"]]
         if "流媒体" in name:
             return [["video-out"]]
-        return [["proxy-out", self.name]]
+        return [["proxy-out", self.name], ["game-out"]]
 
 
 class SsrDogProvider(BaseProvider):
@@ -114,6 +112,7 @@ class Gen(BaseGen):
         dr.add("gpt", domain_suffix=["perplexity.ai"])
         dr.add("video", rule_set=self.rule_set("geosite-youtube"))
         dr.add("proxy", rule_set=self.rule_sets(["geosite-bing", "geosite-github"]))
+        dr.add("direct", domain_suffix=["ftiasch.xyz"])
         dr.add(
             "direct",
             rule_set=self.rule_sets(
