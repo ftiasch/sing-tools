@@ -112,6 +112,7 @@ class Gen(BaseGen):
         dr.add("gpt", domain_suffix=["perplexity.ai"])
         dr.add("video", rule_set=self.rule_set("geosite-youtube"))
         dr.add("proxy", rule_set=self.rule_sets(["geosite-bing", "geosite-github"]))
+        dr.add("proxy", domain_suffix=["hc-ping.com"])
         dr.add("direct", domain_suffix=["ftiasch.xyz"])
         dr.add(
             "direct",
@@ -127,6 +128,7 @@ class Gen(BaseGen):
             ),
         )
         dr.add("game", rule_set=self.rule_set("geosite-steam"))
+        # dr.add("game", source_ip_cidr=["192.168.1.103"])  # steam-deck
         self.config["dns"]["servers"].extend(
             [
                 {
