@@ -2,6 +2,7 @@
 set -o errexit
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
+. .env/bin/activate
 
 python -m sing_tools $@
 # sing-box check -c run/config.json
