@@ -268,6 +268,15 @@ class Parser:
                         )
                     else:
                         logging.warning("unknown ss|%s|%s", parsed_url.netloc, fragment)
+                case "ssr":
+                    remarks = parse_qs(
+                        urlparse(_b64decode(parsed_url.netloc).split(":")[5]).query
+                    ).get("remarks", [])
+                    for remark in remarks:
+                        logging.warning(
+                            "unknown ssr|%s",
+                            _b64decode(remark),
+                        )
                 case _:
                     logging.warning(
                         "unknown proto|scheme=%s|%s", parsed_url.scheme, fragment
