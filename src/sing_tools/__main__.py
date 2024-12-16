@@ -43,7 +43,7 @@ class SsrDogProvider(BaseProvider):
     def __init__(self):
         super().__init__(
             "ssrdog",
-            "https://no1-svip.api-baobaog.rest/s?t=75c680c64ec9ab655585fe6712da4fe2",
+            "https://no1-svip.urlapi-dodo.me/s?t=05ba605103ea13562f59002a2afe05ae",
         )
 
     @override
@@ -89,7 +89,8 @@ class DomainRules:
         for tag in self.tags:
             yield {
                 "tag": tag + "-dns",
-                "address": "127.0.0.1:6053" if tag == "direct" else "tls://8.8.8.8",
+                # "address": "127.0.0.1:6053" if tag == "direct" else "tls://8.8.8.8",
+                "address": "tls://223.5.5.5" if tag == "direct" else "tls://8.8.8.8",
                 "strategy": "ipv4_only",
                 "detour": tag + "-out",
             }
