@@ -13,6 +13,9 @@ import dns.resolver
 import requests
 
 
+RELAY_UUID = "33fd2057-87c9-4929-87db-1cf8662f9c4d"
+
+
 def _b64decode(b: str) -> str:
     while len(b) % 4 != 0:
         b += "="
@@ -272,7 +275,7 @@ class Parser:
             return (uuid, None, server_port)
         return (uuid, server, server_port)
 
-    def parse(self, provider: BaseProvider):
+    def add(self, provider: BaseProvider):
         for fragment, proto, outbound in provider.get_outbounds(self):
             paths = provider.filter(proto, fragment)
             if paths:
@@ -382,8 +385,14 @@ class BaseGen:
                     "listen_port": 8002,
                 },
                 {
-                    "type": "direct",
+                    "type": "vless",
                     "tag": "relay-in",
+                    "users": [
+                        {
+                            "name": "relay",
+                            "uuid": RELAY_UUID,
+                        }
+                    ],
                     "listen": "::",
                     "listen_port": 9001,
                 },

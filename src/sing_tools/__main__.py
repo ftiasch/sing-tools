@@ -6,7 +6,33 @@ from typing import IO, Annotated, Any, override
 import typer
 
 from .common import setup_logging
-from .lib import BaseGen, BaseProvider, FilterResult, Parser
+from .lib import RELAY_UUID, BaseGen, BaseProvider, FilterResult, Parser
+
+
+class ExgressProvider(BaseProvider):
+    def __init__(self):
+        self.name = "exgress"
+
+    def download(self):
+        pass
+
+    @override
+    def filter(self, proto: str, name: str) -> FilterResult:
+        return [["proxy-out"]]
+
+    @override
+    def get_outbounds(self, _parser: Parser):
+        yield (
+            "relay-out",
+            "vless",
+            {
+                "type": "vless",
+                "tag": "vless-out",
+                "server": "172.16.1.65",
+                "server_port": 9001,
+                "uuid": RELAY_UUID,
+            },
+        )
 
 
 class OkggProvider(BaseProvider):
@@ -64,6 +90,8 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
                 providers.append(WwProvider())
             case "ssrdog":
                 providers.append(SsrDogProvider())
+            case "exgress":
+                providers.append(ExgressProvider())
             case _:
                 pass
     return providers
@@ -216,7 +244,7 @@ def main(
 
     parser = Parser(nameserver=nameserver, ipv6=ipv6)
     for p in providers:
-        parser.parse(p)
+        parser.add(p)
     with open("run/outbounds.json", "w") as f:
         dump(parser.get_outbounds(), f)
 
