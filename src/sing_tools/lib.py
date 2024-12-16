@@ -380,6 +380,12 @@ class BaseGen:
                     "listen": "::",
                     "listen_port": 8002,
                 },
+                {
+                    "type": "direct",
+                    "tag": "relay-in",
+                    "listen": "::",
+                    "listen_port": 9001,
+                },
             ],
             "outbounds": None,
             "experimental": {
