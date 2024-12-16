@@ -385,11 +385,11 @@ class BaseGen:
                     "listen_port": 8002,
                 },
                 {
-                    "type": "vless",
+                    "type": "vmess",
                     "tag": "relay-in",
                     "users": [
                         {
-                            "name": "relay",
+                            "alterId": 0,
                             "uuid": RELAY_UUID,
                         }
                     ],
