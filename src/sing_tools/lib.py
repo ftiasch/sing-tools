@@ -91,6 +91,112 @@ class BaseProvider:
         with open(f"run/{name}.txt", "w") as f:
             f.write(content)
 
+    def get_outbounds(self, parser: "Parser"):
+        def parse_vless(parsed_url, q):
+            fp = q.get("fp", [])
+            # known values in `fp`
+            # - `ios`
+            # - `random`
+            if "ios" in fp:
+                return
+            type = q.get("type", [])
+            if not type:
+                return
+            uuid, server, server_port = parser.parse_url(parsed_url)
+            if not server:
+                return
+            config = {
+                "type": "vless",
+                "server": server,
+                "server_port": server_port,
+                "uuid": uuid,
+            }
+            securiy = q.get("security", [])
+            if securiy and securiy[0] == "tls":
+                config["tls"] = {
+                    "enabled": True,
+                    "server_name": q["sni"][0],
+                }
+            match type[0]:
+                case "tcp":
+                    return {**config, "network": "tcp", "flow": q.get("flow")[0]}
+                case "grpc":
+                    grpc = {
+                        "type": "grpc",
+                        "service_name": query_params["serviceName"][0],
+                    }
+                    # if q.get("path"):
+                    #     grpc["path"] = q.get("path")[0]
+                    return {**config, "transport": grpc}
+
+        with open(f"run/{self.name}.txt") as f:
+            share_links = _b64decode(f.read()).splitlines()
+        for share_link in share_links:
+            try:
+                parsed_url = urlparse(share_link)
+            except ValueError:
+                continue
+            fragment = unquote(parsed_url.fragment, encoding="utf-8")
+            query_params = parse_qs(parsed_url.query)
+            match parsed_url.scheme:
+                case "vless":
+                    outbound = parse_vless(parsed_url, query_params)
+                    if outbound:
+                        yield fragment, "vless", outbound
+                    else:
+                        logging.warning("unknown vless|%s|%s", query_params, fragment)
+                case "trojan":
+                    uuid, server, server_port = parser.parse_url(parsed_url)
+                    if server:
+                        yield (
+                            fragment,
+                            "trojan",
+                            {
+                                "type": "trojan",
+                                "server": server,
+                                "server_port": server_port,
+                                "password": uuid,
+                                "tls": {
+                                    "enabled": True,
+                                    "insecure": query_params.get("allowInsecure", ["0"])
+                                    == ["1"],
+                                    "server_name": query_params["peer"][0],
+                                },
+                            },
+                        )
+                    else:
+                        logging.warning("unknown trojan|%s|%s", query_params, fragment)
+                case "ss":
+                    uuid, server, server_port = parser.parse_url(parsed_url)
+                    method, password = _b64decode(uuid).split(":")
+                    if server:
+                        yield (
+                            fragment,
+                            "ss",
+                            {
+                                "type": "shadowsocks",
+                                "server": server,
+                                "server_port": server_port,
+                                "password": password,
+                                "method": method,
+                            },
+                        )
+                    else:
+                        logging.warning("unknown ss|%s|%s", parsed_url.netloc, fragment)
+                case "ssr":
+                    remarks = parse_qs(
+                        urlparse(_b64decode(parsed_url.netloc).split(":")[5]).query
+                    ).get("remarks", [])
+                    for remark in remarks:
+                        logging.warning(
+                            "unknown ssr|%s",
+                            _b64decode(remark),
+                        )
+                case _:
+                    logging.warning(
+                        "unknown proto|scheme=%s|%s", parsed_url.scheme, fragment
+                    )
+
 
 class Parser:
     nameserver: Optional[str | dns.nameserver.Nameserver]
@@ -157,7 +263,7 @@ class Parser:
             tag = otag + f" #{count}"
         return tag
 
-    def __parse_url(self, parsed_url: ParseResult) -> Tuple[str, str | None, int]:
+    def parse_url(self, parsed_url: ParseResult) -> Tuple[str, str | None, int]:
         uuid, hostname_part = parsed_url.netloc.split("@", 1)
         server, server_port = hostname_part.split(":", 1)
         server_port = int(server_port)
@@ -167,7 +273,7 @@ class Parser:
         return (uuid, server, server_port)
 
     def parse(self, provider: BaseProvider):
-        def try_add(fragment, proto, outbound):
+        for fragment, proto, outbound in provider.get_outbounds(self):
             paths = provider.filter(proto, fragment)
             if paths:
                 for path in paths:
@@ -176,111 +282,6 @@ class Parser:
                 self.outbounds.append((paths, outbound))
             else:
                 logging.warning("filtered|%s", fragment)
-
-        def parse_vless(parsed_url, q):
-            fp = q.get("fp", [])
-            # known values in `fp`
-            # - `ios`
-            # - `random`
-            if "ios" in fp:
-                return
-            type = q.get("type", [])
-            if not type:
-                return
-            uuid, server, server_port = self.__parse_url(parsed_url)
-            if not server:
-                return
-            config = {
-                "type": "vless",
-                "server": server,
-                "server_port": server_port,
-                "uuid": uuid,
-            }
-            securiy = q.get("security", [])
-            if securiy and securiy[0] == "tls":
-                config["tls"] = {
-                    "enabled": True,
-                    "server_name": q["sni"][0],
-                }
-            match type[0]:
-                case "tcp":
-                    return {**config, "network": "tcp", "flow": q.get("flow")[0]}
-                case "grpc":
-                    grpc = {
-                        "type": "grpc",
-                        "service_name": query_params["serviceName"][0],
-                    }
-                    # if q.get("path"):
-                    #     grpc["path"] = q.get("path")[0]
-                    return {**config, "transport": grpc}
-
-        with open(f"run/{provider.name}.txt") as f:
-            share_links = _b64decode(f.read()).splitlines()
-        for share_link in share_links:
-            try:
-                parsed_url = urlparse(share_link)
-            except ValueError:
-                continue
-            fragment = unquote(parsed_url.fragment, encoding="utf-8")
-            query_params = parse_qs(parsed_url.query)
-            match parsed_url.scheme:
-                case "vless":
-                    outbound = parse_vless(parsed_url, query_params)
-                    if outbound:
-                        try_add(fragment, "vless", outbound)
-                    else:
-                        logging.warning("unknown vless|%s|%s", query_params, fragment)
-                case "trojan":
-                    uuid, server, server_port = self.__parse_url(parsed_url)
-                    if server:
-                        try_add(
-                            fragment,
-                            "trojan",
-                            {
-                                "type": "trojan",
-                                "server": server,
-                                "server_port": server_port,
-                                "password": uuid,
-                                "tls": {
-                                    "enabled": True,
-                                    "insecure": query_params.get("allowInsecure", ["0"])
-                                    == ["1"],
-                                    "server_name": query_params["peer"][0],
-                                },
-                            },
-                        )
-                    else:
-                        logging.warning("unknown trojan|%s|%s", query_params, fragment)
-                case "ss":
-                    uuid, server, server_port = self.__parse_url(parsed_url)
-                    method, password = _b64decode(uuid).split(":")
-                    if server:
-                        try_add(
-                            fragment,
-                            "ss",
-                            {
-                                "type": "shadowsocks",
-                                "server": server,
-                                "server_port": server_port,
-                                "password": password,
-                                "method": method,
-                            },
-                        )
-                    else:
-                        logging.warning("unknown ss|%s|%s", parsed_url.netloc, fragment)
-                case "ssr":
-                    remarks = parse_qs(
-                        urlparse(_b64decode(parsed_url.netloc).split(":")[5]).query
-                    ).get("remarks", [])
-                    for remark in remarks:
-                        logging.warning(
-                            "unknown ssr|%s",
-                            _b64decode(remark),
-                        )
-                case _:
-                    logging.warning(
-                        "unknown proto|scheme=%s|%s", parsed_url.scheme, fragment
-                    )
 
     def get_outbounds(self) -> list[dict]:
         groups, auto_groups, outbounds = defaultdict(set), defaultdict(set), []
