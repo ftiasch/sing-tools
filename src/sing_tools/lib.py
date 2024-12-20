@@ -12,7 +12,6 @@ import dns.rdatatype
 import dns.resolver
 import requests
 
-
 RELAY_UUID = "33fd2057-87c9-4929-87db-1cf8662f9c4d"
 
 

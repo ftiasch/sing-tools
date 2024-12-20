@@ -9,32 +9,6 @@ from .common import setup_logging
 from .lib import RELAY_UUID, BaseGen, BaseProvider, FilterResult, Parser
 
 
-class ExgressProvider(BaseProvider):
-    def __init__(self):
-        self.name = "exgress"
-
-    def download(self):
-        pass
-
-    @override
-    def filter(self, proto: str, name: str) -> FilterResult:
-        return [["proxy-out"]]
-
-    @override
-    def get_outbounds(self, _parser: Parser):
-        yield (
-            "relay-out",
-            "vless",
-            {
-                "type": "vless",
-                "tag": "vless-out",
-                "server": "172.16.1.65",
-                "server_port": 9001,
-                "uuid": RELAY_UUID,
-            },
-        )
-
-
 class OkggProvider(BaseProvider):
     def __init__(self):
         super().__init__("okgg", "https://rss.okxyz.xyz/link/nPsuuOMh6xq1lyS5?mu=2")
@@ -90,8 +64,6 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
                 providers.append(WwProvider())
             case "ssrdog":
                 providers.append(SsrDogProvider())
-            case "exgress":
-                providers.append(ExgressProvider())
             case _:
                 pass
     return providers
@@ -227,11 +199,12 @@ def dump(obj: Any, f: IO):
 def main(
     *,
     download: bool = False,
-    nameserver: str = DEFAULT_NAMESERVER,
-    ipv6: bool = False,
-    provider_names: Annotated[list[str] | None, typer.Option("--provider", "-p")],
     download_detour: Annotated[str, typer.Option("--dd")] = "direct-out",
     ghproxy: bool = True,
+    ipv6: bool = False,
+    nameserver: str = DEFAULT_NAMESERVER,
+    provider_names: Annotated[list[str], typer.Option("--provider", "-p")] = [],
+    relay: bool = False,
 ):
     setup_logging()
     os.makedirs("run", exist_ok=True)
@@ -251,7 +224,30 @@ def main(
     gen = Gen(parser, download_detour=download_detour, ghproxy=ghproxy)
     gen.override()
     with open("run/config.json", "w") as f:
-        dump(gen.get_config(), f)
+        config = gen.get_config()
+        if relay:
+            del config["dns"]
+            config["inbounds"] = [
+                {
+                    "type": "mixed",
+                    "tag": "http-in",
+                    "listen": "::",
+                    "listen_port": 8001,
+                },
+            ]
+            config["outbounds"] = [
+                {"type": "direct", "tag": "direct-out"},
+                {"type": "block", "tag": "reject-out"},
+                {"type": "dns", "tag": "dns-out"},
+                {
+                    "type": "vless",
+                    "tag": "proxy-out",
+                    "server": "172.16.1.65",
+                    "server_port": 9001,
+                    "uuid": RELAY_UUID,
+                },
+            ]
+        dump(config, f)
 
 
 if __name__ == "__main__":
