@@ -26,13 +26,10 @@ class ExgressProvider(BaseProvider):
             "relay-out",
             "vless",
             {
-                "type": "vmess",
+                "type": "vless",
                 "tag": "vless-out",
                 "server": "172.16.1.65",
                 "server_port": 9001,
-                "alter_id": 0,
-                "packet_encoding": "packetaddr",
-                "security": "aes-128-gcm",
                 "uuid": RELAY_UUID,
             },
         )

@@ -377,19 +377,24 @@ class BaseGen:
                     "stack": "system",
                     "sniff": True,
                 },
-                {"type": "http", "tag": "http-in", "listen": "::", "listen_port": 8001},
                 {
-                    "type": "http",
+                    "type": "mixed",
+                    "tag": "http-in",
+                    "listen": "::",
+                    "listen_port": 8001,
+                },
+                {
+                    "type": "mixed",
                     "tag": "http-direct-in",
                     "listen": "::",
                     "listen_port": 8002,
                 },
                 {
-                    "type": "vmess",
+                    "type": "vless",
                     "tag": "relay-in",
                     "users": [
                         {
-                            "alterId": 0,
+                            "name": "user",
                             "uuid": RELAY_UUID,
                         }
                     ],
