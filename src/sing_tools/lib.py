@@ -368,12 +368,9 @@ class BaseGen:
                 {
                     "type": "tun",
                     "tag": "tun-in",
-                    # "mtu": 1492,
-                    # "gso": True,
                     "address": ["172.19.0.1/30"],
                     "auto_route": True,
                     "strict_route": False,
-                    "stack": "system",
                     "sniff": True,
                 },
                 {
