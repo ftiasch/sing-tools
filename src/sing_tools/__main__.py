@@ -9,6 +9,28 @@ from .common import setup_logging
 from .lib import RELAY_UUID, BaseGen, BaseProvider, FilterResult, Parser
 
 
+class BjProvider(BaseProvider):
+    def __init__(self):
+        super().__init__("relay")
+
+    def get_outbounds(self, _):
+        yield (
+            "bj-relay",
+            "",
+            {
+                "type": "vless",
+                "tag": "proxy-out",
+                "server": "172.16.1.65",
+                "server_port": 9001,
+                "uuid": RELAY_UUID,
+            },
+        )
+
+    @override
+    def filter(self, proto: str, name: str) -> FilterResult:
+        return [["proxy-out"]]
+
+
 class OkggProvider(BaseProvider):
     def __init__(self):
         super().__init__("okgg", "https://rss.okxyz.xyz/link/nPsuuOMh6xq1lyS5?mu=2")
@@ -58,6 +80,8 @@ def get_providers(names: list[str]) -> list[BaseProvider]:
     providers: list[BaseProvider] = []
     for name in names:
         match name:
+            case "bj":
+                providers.append(BjProvider())
             case "okgg":
                 providers.append(OkggProvider())
             case "ww":
@@ -204,7 +228,6 @@ def main(
     ipv6: bool = False,
     nameserver: str = DEFAULT_NAMESERVER,
     provider_names: Annotated[list[str], typer.Option("--provider", "-p")] = [],
-    relay: bool = False,
 ):
     setup_logging()
     os.makedirs("run", exist_ok=True)
@@ -224,30 +247,7 @@ def main(
     gen = Gen(parser, download_detour=download_detour, ghproxy=ghproxy)
     gen.override()
     with open("run/config.json", "w") as f:
-        config = gen.get_config()
-        if relay:
-            del config["dns"]
-            config["inbounds"] = [
-                {
-                    "type": "mixed",
-                    "tag": "http-in",
-                    "listen": "::",
-                    "listen_port": 8001,
-                },
-            ]
-            config["outbounds"] = [
-                {"type": "direct", "tag": "direct-out"},
-                {"type": "block", "tag": "reject-out"},
-                {"type": "dns", "tag": "dns-out"},
-                {
-                    "type": "vless",
-                    "tag": "proxy-out",
-                    "server": "172.16.1.65",
-                    "server_port": 9001,
-                    "uuid": RELAY_UUID,
-                },
-            ]
-        dump(config, f)
+        dump(gen.get_config(), f)
 
 
 if __name__ == "__main__":

@@ -38,9 +38,9 @@ FilterResult: TypeAlias = list[list[str]]
 
 class BaseProvider:
     name: str
-    url: str
+    url: str | None
 
-    def __init__(self, name: str, url: str):
+    def __init__(self, name: str, url: str | None = None):
         self.name, self.url = name, url
 
     @staticmethod
@@ -83,6 +83,8 @@ class BaseProvider:
         return [["proxy-out", self.name]]
 
     def download(self) -> None:
+        if self.url is None:
+            return
         name, url = self.name, self.url
         logging.info("Downloading %s from %s", name, url)
         try:
