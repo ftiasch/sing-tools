@@ -326,14 +326,12 @@ class Parser:
 
 class BaseGen:
     __parser: Parser
-    __download_detour: str
-    __ghproxy: bool
+    __ghproxy: str
     __rule_sets: set[str]
     config: dict
 
-    def __init__(self, parser: Parser, download_detour: str, ghproxy: bool) -> None:
+    def __init__(self, parser: Parser, ghproxy: str) -> None:
         self.__parser = parser
-        self.__download_detour = download_detour
         self.__ghproxy = ghproxy
         self.__rule_sets = set()
         self.config = {
@@ -430,7 +428,7 @@ class BaseGen:
             url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{r}.srs"
         else:
             url = f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{r}.srs"
-        return "https://ghp.ci/" + url if self.__ghproxy else url
+        return self.__ghproxy + url
 
     def __get_rule_sets(self) -> list[dict]:
         result = []
@@ -439,7 +437,7 @@ class BaseGen:
                 {
                     "tag": r,
                     "type": "remote",
-                    "download_detour": self.__download_detour,
+                    "download_detour": "direct-out" if self.__ghproxy else "proxy-out",
                     "update_interval": "1d",
                     "format": "binary",
                     "url": self.__get_rule_set_url(r),

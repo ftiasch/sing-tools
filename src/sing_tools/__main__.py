@@ -223,8 +223,7 @@ def dump(obj: Any, f: IO):
 def main(
     *,
     download: bool = False,
-    download_detour: Annotated[str, typer.Option("--dd")] = "direct-out",
-    ghproxy: bool = True,
+    ghproxy: str = "",
     ipv6: bool = False,
     nameserver: str = DEFAULT_NAMESERVER,
     provider_names: Annotated[list[str], typer.Option("--provider", "-p")] = [],
@@ -244,7 +243,7 @@ def main(
     with open("run/outbounds.json", "w") as f:
         dump(parser.get_outbounds(), f)
 
-    gen = Gen(parser, download_detour=download_detour, ghproxy=ghproxy)
+    gen = Gen(parser, ghproxy=ghproxy)
     gen.override()
     with open("run/config.json", "w") as f:
         dump(gen.get_config(), f)
