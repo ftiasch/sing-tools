@@ -16,6 +16,8 @@ ssh marf-gw service sing-box restart
 rsync run/config.json marf-sh:/etc/sing-box
 ssh marf-sh service sing-box restart
 
+rsync run/config.json camp-pk:/etc/sing-box
+
 prefix=/home/ftiasch/Sync/sing
 sed 's@/usr/share@.@g' run/config.json >$prefix/config.json
 # rsync -arz /usr/share/sing-box/sing-geosite-rule-set/ $prefix/sing-geosite/
