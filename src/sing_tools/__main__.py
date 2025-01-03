@@ -50,7 +50,7 @@ class OkggProvider(BaseProvider):
 
 class WwProvider(BaseProvider):
     def __init__(self):
-        super().__init__("ww", "https://ww5271.xyz/rss/mEWrAf3/D7jmP8?net_type=TROJAN")
+        super().__init__("ww", "https://xb1821.com/rss/mEWrAf3/ENnYex?net_type=ALL")
 
     @override
     def filter(self, proto: str, name: str) -> FilterResult:
@@ -138,7 +138,7 @@ class Gen(BaseGen):
         dr.add("video", rule_set=self.rule_set("geosite-youtube"))
         dr.add("proxy", rule_set=self.rule_sets(["geosite-bing", "geosite-github"]))
         dr.add("proxy", domain_suffix=["hc-ping.com"])
-        dr.add("direct", domain_suffix=["ftiasch.xyz"])
+        dr.add("direct", domain_suffix=["ftiasch.xyz", "syncthing.net"])
         dr.add(
             "direct",
             rule_set=self.rule_sets(
