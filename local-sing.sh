@@ -34,12 +34,24 @@ case $DIRECTION in
 up)
 	echo "Going up!"
 	change_dns "127.0.0.1" "up"
-	sudo systemctl start sing-box
+	sudo systemctl --no-pager --full start sing-box
+	if [ $? -eq 0 ]; then
+		echo "✅ sing-box service started successfully"
+	else
+		echo "❌ Failed to start sing-box service"
+		sudo systemctl --no-pager --full status sing-box
+	fi
 	;;
 down)
 	echo "Going down!"
 	change_dns "223.5.5.5" "down"
-	sudo systemctl stop sing-box
+	sudo systemctl --no-pager --full stop sing-box
+	if [ $? -eq 0 ]; then
+		echo "✅ sing-box service stopped successfully"
+	else
+		echo "❌ Failed to stop sing-box service"
+		sudo systemctl --no-pager --full status sing-box
+	fi
 	;;
 *)
 	echo "Invalid argument: $DIRECTION"
