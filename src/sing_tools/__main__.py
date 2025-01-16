@@ -50,7 +50,7 @@ class OkggProvider(BaseProvider):
 
 class WwProvider(BaseProvider):
     def __init__(self):
-        super().__init__("ww", "https://xb1821.com/rss/mEWrAf3/ENnYex?net_type=ALL")
+        super().__init__("ww", "https://xb1821.com/rss/mEWrAf3/CBQG7I?net_type=ALL")
 
     @override
     def filter(self, proto: str, name: str) -> FilterResult:
