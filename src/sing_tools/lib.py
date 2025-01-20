@@ -304,7 +304,7 @@ class Parser:
                 {
                     "type": "selector",
                     "tag": group,
-                    "outbounds": [_auto(group), *children],
+                    "outbounds": [_auto(group), "direct-out", *children],
                     "default": _auto(group),
                     "interrupt_exist_connections": False,
                 },
