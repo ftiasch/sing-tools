@@ -33,7 +33,7 @@ class BjProvider(BaseProvider):
 
 class OkggProvider(BaseProvider):
     def __init__(self):
-        super().__init__("okgg", "https://rss.okxyz.xyz/link/nPsuuOMh6xq1lyS5?mu=2")
+        super().__init__("okgg", "https://rss.okxyz.xyz/link/zGjkzJeqP83WXt46?mu=2")
 
     @override
     def filter(self, proto: str, name: str) -> FilterResult:
