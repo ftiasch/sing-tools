@@ -1,0 +1,104 @@
+---
+log:
+  level: info
+  timestamp: true
+dns:
+  servers:
+  - tag: dns_proxy
+    address: tcp://1.1.1.1
+    address_resolver: dns_resolver
+    strategy: ipv4_only
+    detour: proxy
+  - tag: dns_direct
+    address: https://dns.alidns.com/dns-query
+    address_resolver: dns_resolver
+    strategy: ipv4_only
+    detour: direct
+  - tag: dns_resolver
+    address: 223.5.5.5
+    detour: direct
+  - tag: dns_success
+    address: rcode://success
+  - tag: dns_refused
+    address: rcode://refused
+  - tag: dns_fakeip
+    address: fakeip
+  rules:
+  - outbound: any
+    server: dns_resolver
+  - rule_set: geosite-geolocation-!cn
+    query_type:
+    - A
+    - AAAA
+    server: dns_fakeip
+  - rule_set: geosite-geolocation-!cn
+    query_type:
+    - CNAME
+    server: dns_proxy
+  - query_type:
+    - A
+    - AAAA
+    - CNAME
+    invert: true
+    server: dns_refused
+    action: route-options
+    disable_cache: true
+  final: dns_direct
+  independent_cache: true
+  fakeip:
+    enabled: true
+    inet4_range: 198.18.0.0/15
+    inet6_range: fc00::/18
+route:
+  rules:
+  - inbound: tun-in
+    action: sniff
+  - inbound: dns-in
+    action: hijack-dns
+  - port: 853
+    network: tcp
+    action: reject
+  - port: 443
+    network: udp
+    action: reject
+  - inbound: http-direct-in
+    action: direct
+  - rule_set: geosite-geolocation-!cn
+    outbound: proxy
+  - rule_set: geoip-cn
+    outbound: direct
+  - ip_is_private: true
+    outbound: direct
+  final: proxy
+  auto_detect_interface: true
+inbounds:
+- type: tun
+  tag: tun-in
+  address:
+  - 172.16.0.1/30
+  - fd00::1/126
+  mtu: 1492
+  auto_route: true
+  strict_route: true
+- type: direct
+  tag: dns-in
+  listen: 0.0.0.0
+  listen_port: 53
+  network: udp
+- type: mixed
+  tag: http-in
+  listen: "::"
+  listen_port: 8001
+- type: mixed
+  tag: http-direct-in
+  listen: "::"
+  listen_port: 8002
+outbounds:
+- type: direct
+  tag: direct
+experimental:
+  cache_file:
+    enabled: true
+    path: cache.db
+    store_fakeip: true
+    store_rdrc: true
